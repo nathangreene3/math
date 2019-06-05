@@ -2,8 +2,8 @@
 
 ## linalg
 
-### vector
-
 ### matrix
+
+### vector
 
 ## stats
