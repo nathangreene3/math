@@ -1,6 +1,9 @@
 package matrix
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+)
 
 func TestMultiply(t *testing.T) {
 	// tests:=[]struct{
@@ -23,4 +26,13 @@ func TestMultiply(t *testing.T) {
 	// 		}
 	// 	}
 	// }
+}
+
+func TestChainMultiply(t *testing.T) {
+	A := Empty(2, 10)
+	B := Empty(10, 3)
+	C := Empty(3, 8)
+	// ABC:   108 mults
+	// A(BC): 400 mults
+	fmt.Println(ChainMultiply(A, B, C).String())
 }

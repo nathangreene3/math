@@ -535,14 +535,74 @@ func NumOps(A, B Matrix) int {
 	return ma * nb * (2*na - 1)
 }
 
-// ChainMultiply several matrices. TODO
-// func ChainMultiply(As ...Matrix) Matrix {
-// 	n := len(As)
-// 	ops := make(map[string]int)
-// 	for i := 0; i+1 < n; i++ {
-// 		ops[fmt.Sprintf("(%d,%d)", i, i+1)] = NumOps(As[i], As[i+1])
-// 	}
+// var pos int
 
-// 	var A Matrix
-// 	return A
-// }
+// ChainMultiply several matrices. TODO
+func ChainMultiply(As ...Matrix) Matrix {
+	/*
+		var (
+			n     = len(As)
+			sizes = make([][]int, 0, n)
+			cost  = make([][]int, 0, n)
+			trace = make([][]int, 0, n)
+			a, b  int
+		)
+		for i := 0; i < n; i++ {
+			a, b = As[i].Dimensions()
+			sizes = append(sizes, []int{a, b})
+			cost = append(cost, make([]int, i))
+			trace = append(trace, make([]int, n))
+		}
+
+		var loc, tcost, ttrace int
+		for i := 0; i+1 < n; i++ {
+			for j := 0; i+j < n; j++ {
+				loc = i + j
+				tcost = math.MaxInt64
+				for k := j; k+1 < loc; k++ {
+					if cost[j][k]+cost[k+1][loc]+sizes[i][0]*sizes[k][1]*sizes[loc][1] < tcost {
+						tcost = cost[j][k] + cost[k+1][loc] + sizes[i][0]*sizes[k][1]*sizes[loc][1]
+						ttrace = k
+					}
+				}
+
+				cost[j][loc] = tcost
+				trace[j][loc] = ttrace
+			}
+		}
+
+		order := make([]int, n)
+		getOrder(0, n-1, order, trace)
+	*/
+
+	// var (
+	// 	n     = len(As)
+	// 	sizes = make([][]int, 0, n)
+	// 	cost  = make([][]int, 0, n)
+	// 	trace = make([][]int, 0, n)
+	// 	a, b  int
+	// )
+
+	// for i:=0;i<n;i++{
+	// 	for j:=0;j<n-i;j++{
+	// 		if i==0{
+	// 			if i==0{
+
+	// 			}
+	// 		}
+	// 	}
+	// }
+
+	var A Matrix
+	return A
+}
+
+func getOrder(a, b int, order []int, trace [][]int) {
+	if a < b {
+		c := trace[a][b]
+		getOrder(a, c, order, trace)
+		getOrder(c+1, b, order, trace)
+		order[pos] = c
+		pos++
+	}
+}
