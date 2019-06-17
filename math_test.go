@@ -58,3 +58,82 @@ func TestGCD(t *testing.T) {
 		}
 	}
 }
+
+func TestFactorial(t *testing.T) {
+	tests := []struct {
+		n                int
+		expected, actual int
+	}{
+		{
+			n:        0,
+			expected: 1,
+		},
+		{
+			n:        1,
+			expected: 1,
+		},
+		{
+			n:        2,
+			expected: 2,
+		},
+		{
+			n:        3,
+			expected: 6,
+		},
+		{
+			n:        4,
+			expected: 24,
+		},
+		{
+			n:        5,
+			expected: 120,
+		},
+	}
+
+	for _, test := range tests {
+		test.actual = Factorial(test.n)
+		if test.expected != test.actual {
+			t.Fatalf("\nexpected: %d\nreceived: %d\n", test.expected, test.actual)
+		}
+	}
+}
+
+func TestChoose(t *testing.T) {
+	tests := []struct {
+		n, k             int
+		expected, actual int
+	}{
+		{
+			n: 5,
+			k: 0,
+		},
+		{
+			n: 5,
+			k: 1,
+		},
+		{
+			n: 5,
+			k: 2,
+		},
+		{
+			n: 5,
+			k: 3,
+		},
+		{
+			n: 5,
+			k: 4,
+		},
+		{
+			n: 5,
+			k: 5,
+		},
+	}
+
+	for _, test := range tests {
+		test.expected = Factorial(test.n) / (Factorial(test.k) * Factorial(test.n-test.k))
+		test.actual = Choose(test.n, test.k)
+		if test.expected != test.actual {
+			t.Fatalf("\nexpected: %d\nreceived: %d\n", test.expected, test.actual)
+		}
+	}
+}

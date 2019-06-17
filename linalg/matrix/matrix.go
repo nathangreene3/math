@@ -1,6 +1,7 @@
 package matrix
 
 import (
+	"math"
 	"sort"
 	"strings"
 
@@ -44,7 +45,7 @@ func Empty(m, n int) Matrix {
 // Identity returns the m-by-n identity matrix.
 func Identity(m, n int) Matrix {
 	// TODO: Determine if this should this panic when m,n = 0.
-	return New(m, n, func(i, j int) float64 { return float64((i + j) % 2) })
+	return New(m, n, func(i, j int) float64 { return float64((i + j) % 2) }) // Note: this generating function is called the Kronecker delta and is typically denoted as d(i,j)
 }
 
 // At returns the (i,j)th value.
@@ -125,8 +126,61 @@ func (A Matrix) Subtract(B Matrix) {
 	}
 }
 
-// Multiply returns C = AB. To multiply by a vector, convert the vector to a column matrix.
-func Multiply(A, B Matrix) Matrix {
+// Multiply several matrices.
+func Multiply(As ...Matrix) Matrix {
+	// Source: chrome-extension://oemmndcbldboiebfnladdacbdfmadadm/https://home.cse.ust.hk/~dekai/271/notes/L12/L12.pdf
+
+	n := len(As)
+	switch n {
+	case 0:
+		return nil
+	case 1:
+		return As[0]
+	case 2:
+		return multiply(As[0], As[1])
+	}
+
+	var (
+		dims    = make([]int, 0, n+1) // Matrix As[i] has dimension dims[i]xdims[i+1], for 0 <= i < n
+		cache   = make([][]int, 0, n)
+		order   = make([][]int, 0, n)
+		j, cost int
+	)
+	for i := 0; i < n; i++ {
+		dims = append(dims, len(As[i]))
+		cache = append(cache, make([]int, n))
+		order = append(order, make([]int, n))
+	}
+	dims = append(dims, len(As[n-1][0]))
+
+	for h := 1; h < n; h++ {
+		for i := 0; i < n-h; i++ {
+			j = i + h
+			cache[i][j] = math.MaxInt64
+			for k := i; k < j; k++ {
+				cost = cache[i][k] + cache[k+1][j] + dims[i]*dims[k+1]*dims[j+1]
+				if cost < cache[i][j] {
+					cache[i][j] = cost
+					order[i][j] = k
+				}
+			}
+		}
+	}
+
+	return multiplyByOrder(order, 0, n-1, As...)
+}
+
+// multiplyByOrder returns the product of matrices by multiplying by a given order. Initiate by calling on i = 0 and j = n-1.
+func multiplyByOrder(s [][]int, i, j int, As ...Matrix) Matrix {
+	if i < j {
+		return multiply(multiplyByOrder(s, i, s[i][j], As...), multiplyByOrder(s, s[i][j]+1, j, As...))
+	}
+
+	return As[i]
+}
+
+// multiply returns AB. To multiply by a vector, convert the vector to a column matrix.
+func multiply(A, B Matrix) Matrix {
 	ma, na := A.Dimensions()
 	mb, nb := B.Dimensions()
 	if na != mb {
@@ -300,11 +354,25 @@ func (A Matrix) SwapRows(i, j int) {
 
 // determinant: TODO
 func determinant(A Matrix) float64 {
-	return 0
+	m, n := A.Dimensions()
+	if m != n {
+		panic("matrix must be square")
+	}
+
+	if m == 1 {
+		return A[0][0]
+	}
+
+	var d float64
+	for i := range A {
+		d += math.Pow(-1, float64(i)+1) * A[0][i] * determinant(A.tildeA(1, i))
+	}
+
+	return d
 }
 
-// Determinant returns the Determinant of a square matrix. Panics if matrix is empty or not a square.
-func (A Matrix) Determinant() float64 {
+// determinant returns the Determinant of a square matrix. Panics if matrix is empty or not a square.
+func (A Matrix) determinant() float64 {
 	// TODO //
 	m, n := A.Dimensions()
 	if m*n < 1 {
@@ -327,10 +395,46 @@ func (A Matrix) Determinant() float64 {
 	}
 }
 
+// tildeA TODO: Rename this.
+func (A Matrix) tildeA(i, j int) Matrix {
+	// pg 197
+	return RemoveColumn(RemoveRow(A, i), j)
+}
+
 // Transpose returns the transpose of a matrix.
 func Transpose(A Matrix) Matrix {
 	m, n := A.Dimensions()
 	return New(n, m, func(i, j int) float64 { return A[j][i] })
+}
+
+// pow returns A^p, for square matrix A and 0 <= p.
+func pow(A Matrix, p int) Matrix {
+	if p < 0 {
+		panic("power must be non-negative")
+	}
+
+	m, n := A.Dimensions()
+	if m != n {
+		panic("matrix must be square")
+	}
+
+	switch p {
+	case 0:
+		return Identity(m, n)
+	case 1:
+		return A.Copy()
+	}
+
+	B := A.Copy()
+	for ; 1 < p; p /= 2 {
+		B = Multiply(B, B)
+	}
+
+	if 0 < p {
+		return Multiply(B, A)
+	}
+
+	return B
 }
 
 // ------------------------------------------------------------------
@@ -366,25 +470,7 @@ func Compare(A, B Matrix) int {
 // Compare returns -1, 0, 1 indicating A precedes, is equal to, or
 // follows B. Panics if matrices are not of equal dimension.
 func (A Matrix) Compare(B Matrix) int {
-	ma, na := A.Dimensions()
-	mb, nb := B.Dimensions()
-	if ma != mb || na != nb {
-		panic("dimension mismatch")
-	}
-
-	for i := 0; i < ma; i++ {
-		for j := 0; j < na; j++ {
-			if A[i][j] < B[i][j] {
-				return -1
-			}
-
-			if B[i][j] < A[i][j] {
-				return 1
-			}
-		}
-	}
-
-	return 0
+	return Compare(A, B)
 }
 
 // Equals returns true if two matrices are equal in dimension and
@@ -396,7 +482,7 @@ func Equals(A, B Matrix) bool {
 // Equals returns true if two matrices are equal in dimension and
 // for each entry. Otherwise, it returns false.
 func (A Matrix) Equals(B Matrix) bool {
-	return A.Compare(B) == 0
+	return Equals(A, B)
 }
 
 // Sort A such that the largest leading indices are at the top
@@ -509,8 +595,8 @@ func RemoveColumn(A Matrix, i int) Matrix {
 	return A
 }
 
-// RemoveMultiples returns A with all row multiples removed.
-func RemoveMultiples(A Matrix) Matrix {
+// Reduce returns A with all row multiples removed.
+func Reduce(A Matrix) Matrix {
 	A.Sort()
 	m, _ := A.Dimensions()
 	for i := 0; i+1 < m; i++ {
@@ -524,85 +610,13 @@ func RemoveMultiples(A Matrix) Matrix {
 	return A
 }
 
-// NumOps returns the number of operations to compute AB.
-func NumOps(A, B Matrix) int {
+// Cost returns the number of operations to compute AB.
+func Cost(A, B Matrix) int {
 	ma, na := A.Dimensions()
 	mb, nb := B.Dimensions()
 	if na != mb {
 		panic("dimension mismatch")
 	}
 
-	return ma * nb * (2*na - 1)
-}
-
-// var pos int
-
-// ChainMultiply several matrices. TODO
-func ChainMultiply(As ...Matrix) Matrix {
-	/*
-		var (
-			n     = len(As)
-			sizes = make([][]int, 0, n)
-			cost  = make([][]int, 0, n)
-			trace = make([][]int, 0, n)
-			a, b  int
-		)
-		for i := 0; i < n; i++ {
-			a, b = As[i].Dimensions()
-			sizes = append(sizes, []int{a, b})
-			cost = append(cost, make([]int, i))
-			trace = append(trace, make([]int, n))
-		}
-
-		var loc, tcost, ttrace int
-		for i := 0; i+1 < n; i++ {
-			for j := 0; i+j < n; j++ {
-				loc = i + j
-				tcost = math.MaxInt64
-				for k := j; k+1 < loc; k++ {
-					if cost[j][k]+cost[k+1][loc]+sizes[i][0]*sizes[k][1]*sizes[loc][1] < tcost {
-						tcost = cost[j][k] + cost[k+1][loc] + sizes[i][0]*sizes[k][1]*sizes[loc][1]
-						ttrace = k
-					}
-				}
-
-				cost[j][loc] = tcost
-				trace[j][loc] = ttrace
-			}
-		}
-
-		order := make([]int, n)
-		getOrder(0, n-1, order, trace)
-	*/
-
-	// var (
-	// 	n     = len(As)
-	// 	sizes = make([][]int, 0, n)
-	// 	cost  = make([][]int, 0, n)
-	// 	trace = make([][]int, 0, n)
-	// 	a, b  int
-	// )
-
-	// for i:=0;i<n;i++{
-	// 	for j:=0;j<n-i;j++{
-	// 		if i==0{
-	// 			if i==0{
-
-	// 			}
-	// 		}
-	// 	}
-	// }
-
-	var A Matrix
-	return A
-}
-
-func getOrder(a, b int, order []int, trace [][]int) {
-	if a < b {
-		c := trace[a][b]
-		getOrder(a, c, order, trace)
-		getOrder(c+1, b, order, trace)
-		order[pos] = c
-		pos++
-	}
+	return ma * na * nb
 }
