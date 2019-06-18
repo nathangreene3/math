@@ -187,16 +187,57 @@ func multiply(A, B Matrix) Matrix {
 		panic("A and B are of incompatible dimensions")
 	}
 
-	f := func(i, j int) float64 {
-		var v float64
-		for k := 0; k < na; k++ {
-			v += A[i][k] * B[k][j]
+	/*
+		f := func(i, j int) float64 {
+			var v float64
+			for k := 0; k < na; k++ {
+				v += A[i][k] * B[k][j]
+			}
+			return v
 		}
+		return New(ma, nb, f)
+	*/
 
-		return v
+	// Winograd's algorithm
+	// Source: Analysis of Algorithms, 2nd Ed., by Jeffrey J. McConnell, pg 139-140
+	var (
+		d      = na / 2
+		rfacts = make([]float64, 0, ma)
+		cfacts = make([]float64, 0, nb)
+	)
+	for i := 0; i < ma; i++ {
+		rfacts = append(rfacts, A[i][0]*A[i][1])
+		for j := 1; j < d; j++ {
+			rfacts[i] += A[i][2*j] * A[i][2*j+1]
+		}
 	}
 
-	return New(ma, nb, f)
+	for i := 0; i < nb; i++ {
+		cfacts = append(cfacts, B[0][i]*B[1][i])
+		for j := 1; j < d; j++ {
+			cfacts[i] += B[2*j][i] * B[2*j+1][i]
+		}
+	}
+
+	C := Empty(ma, nb)
+	for i := 0; i < ma; i++ {
+		for j := 0; j < nb; j++ {
+			C[i][j] = -rfacts[i] - cfacts[j]
+			for k := 0; k < d; k++ {
+				C[i][j] += (A[i][2*k] + B[2*k+1][j]) * (A[i][2*k+1] + B[2*k][j])
+			}
+		}
+	}
+
+	if na%2 != 0 {
+		for i := 0; i < ma; i++ {
+			for j := 0; j < nb; j++ {
+				C[i][j] += A[i][na-1] * B[na-1][j]
+			}
+		}
+	}
+
+	return C
 }
 
 // ScalarMultiply returns aA.
@@ -352,32 +393,14 @@ func (A Matrix) SwapRows(i, j int) {
 	}
 }
 
-// determinant: TODO
-func determinant(A Matrix) float64 {
-	m, n := A.Dimensions()
-	if m != n {
-		panic("matrix must be square")
-	}
-
-	if m == 1 {
-		return A[0][0]
-	}
-
-	var d float64
-	for i := range A {
-		d += math.Pow(-1, float64(i)+1) * A[0][i] * determinant(A.tildeA(1, i))
-	}
-
-	return d
-}
-
-// determinant returns the Determinant of a square matrix. Panics if matrix is empty or not a square.
-func (A Matrix) determinant() float64 {
+// Determinant returns the Determinant of a square matrix. Panics if matrix is empty or not a square.
+func (A Matrix) Determinant() float64 {
 	// TODO //
 	m, n := A.Dimensions()
-	if m*n < 1 {
+	if m == 0 || n == 0 {
 		panic("cannot take determinant of empty matrix")
 	}
+
 	if m != n {
 		panic("cannot take determinant of a non-square matrix")
 	}
@@ -389,15 +412,23 @@ func (A Matrix) determinant() float64 {
 		return A[0][0]*A[1][1] - A[0][1]*A[1][0]
 	case 3:
 		return A[0][0]*(A[1][2]*A[2][2]-A[1][2]*A[2][1]) - A[0][1]*(A[1][0]*A[2][2]-A[1][2]*A[2][0]) + A[0][2]*(A[1][0]*A[2][1]-A[1][1]*A[2][0])
-	default:
-		// TODO //
-		return 0
 	}
+
+	var (
+		a = float64(1)
+		d float64
+	)
+	for i := 0; 0 < m; i++ {
+		d += a * A[0][i] * RemoveColumn(RemoveRow(A, 0), i).Determinant()
+		a *= -1
+	}
+
+	return d
 }
 
 // tildeA TODO: Rename this.
 func (A Matrix) tildeA(i, j int) Matrix {
-	// pg 197
+	// LinAlg pg 197
 	return RemoveColumn(RemoveRow(A, i), j)
 }
 
@@ -407,8 +438,8 @@ func Transpose(A Matrix) Matrix {
 	return New(n, m, func(i, j int) float64 { return A[j][i] })
 }
 
-// pow returns A^p, for square matrix A and 0 <= p.
-func pow(A Matrix, p int) Matrix {
+// Pow returns A^p, for square matrix A and 0 <= p.
+func Pow(A Matrix, p int) Matrix {
 	if p < 0 {
 		panic("power must be non-negative")
 	}
