@@ -1,6 +1,8 @@
 package groups
 
-// Permutation is an ordering of [0, 1, ..., n-1].
+import "github.com/nathangreene3/math/set"
+
+// Permutation is an ordering of [0, 1, ..., n-1]. A complete set of all permutations of a given length n are denoted as Sn.
 type Permutation []int
 
 // New returns [0, 1, ..., n-1].
@@ -14,34 +16,44 @@ func New(n int) Permutation {
 }
 
 // Multiply returns pq.
-func Multiply(p, q Permutation) Permutation {
-	n := len(p)
-	if n != len(q) {
+func Multiply(a, b Permutation) Permutation {
+	n := len(a)
+	if n != len(b) {
 		panic("dimension mismatch")
 	}
 
-	r := make(Permutation, 0, n)
-	for i := 0; i < n; i++ {
-		r = append(r, p[q[i]])
-	}
-
-	return r
-}
-
-// Order returns the number of multiplications of p with itself until it becomes [0, 1, ..., n-1].
-func Order(p Permutation) int {
-	if !IsPermutation(p) {
+	if !IsPermutation(a) || !IsPermutation(b) {
 		panic("not a permutation")
 	}
 
-	e := New(len(p))
-	q := Copy(p)
-	var c int
-	for ; !Equal(q, e); c++ {
-		q = Multiply(q, p)
+	c := make(Permutation, 0, n)
+	for i := 0; i < n; i++ {
+		c = append(c, a[b[i]])
 	}
 
 	return c
+}
+
+// Generate returns the subset <a> of Sn.
+func Generate(a Permutation) set.Set {
+	if !IsPermutation(a) {
+		panic("not a permutation")
+	}
+
+	S := make(set.Set)
+	e := New(len(a))
+	b := Copy(a)
+	set.Insert(S, b)
+	for ; !Equal(b, e); set.Insert(S, b) {
+		b = Multiply(b, a)
+	}
+
+	return S
+}
+
+// Order returns the number of multiplications of p with itself until it becomes [0, 1, ..., n-1].
+func Order(a Permutation) int {
+	return len(Generate(a))
 }
 
 // Compare two permutations.
@@ -49,6 +61,10 @@ func Compare(p, q Permutation) int {
 	n := len(p)
 	if n != len(q) {
 		panic("dimension mismatch")
+	}
+
+	if !IsPermutation(p) || !IsPermutation(q) {
+		panic("not a permutation")
 	}
 
 	for i := 0; i < n; i++ {
