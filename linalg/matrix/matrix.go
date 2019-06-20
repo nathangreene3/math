@@ -449,11 +449,8 @@ func Pow(A Matrix, p int) Matrix {
 		panic("matrix must be square")
 	}
 
-	switch p {
-	case 0:
+	if p == 0 {
 		return Identity(m, n)
-	case 1:
-		return A.Copy()
 	}
 
 	B := A.Copy()

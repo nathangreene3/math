@@ -1,12 +1,19 @@
 package set
 
-import "sort"
+import (
+	"sort"
+)
+
+// Comparable defines how similar types are compared.
+type Comparable interface {
+	CompareTo(v Comparable) int
+}
 
 // A Set is a collection of keyed values.
-type Set map[int]interface{}
+type Set map[int]Comparable
 
 // New returns a set mapping the range of keys [0,n) to each value.
-func New(S []interface{}) Set {
+func New(S []Comparable) Set {
 	B := make(Set)
 	for k := range S {
 		B[k] = S[k]
@@ -26,8 +33,8 @@ func Copy(A Set) Set {
 }
 
 // ToSlice exports a set to a slice.
-func ToSlice(A Set) []interface{} {
-	S := make([]interface{}, 0, len(A))
+func ToSlice(A Set) []Comparable {
+	S := make([]Comparable, 0, len(A))
 	for k := range A {
 		S = append(S, A[k])
 	}
@@ -58,7 +65,7 @@ func Sort(A Set, less func(i, j int) bool) Set {
 }
 
 // Insert a value into a set. Returns the key. Duplicate values will not be inserted, but the current key of the existing value will be returned.
-func Insert(A Set, v interface{}) (Set, int) {
+func Insert(A Set, v Comparable) (Set, int) {
 	k, ok := Contains(A, v)
 	if !ok {
 		A[k] = v
@@ -68,7 +75,7 @@ func Insert(A Set, v interface{}) (Set, int) {
 }
 
 // Remove and return a value from a set.
-func Remove(A Set, k int) interface{} {
+func Remove(A Set, k int) Comparable {
 	if v, ok := A[k]; ok {
 		delete(A, k)
 		return v
@@ -78,7 +85,7 @@ func Remove(A Set, k int) interface{} {
 }
 
 // Contains returns the key of a value and true if it is found. If not, then the next available key and false is returned.
-func Contains(A Set, v interface{}) (int, bool) {
+func Contains(A Set, v Comparable) (int, bool) {
 	n := len(A)
 	if n == 0 {
 		return 0, false
@@ -86,7 +93,7 @@ func Contains(A Set, v interface{}) (int, bool) {
 
 	keys := make([]int, 0, n)
 	for k := range A {
-		if A[k] == v {
+		if A[k].CompareTo(v) == 0 {
 			return k, true
 		}
 
