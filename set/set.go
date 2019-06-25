@@ -9,11 +9,16 @@ type Comparable interface {
 	CompareTo(v Comparable) int
 }
 
+// Equatable defines equality between similar types.
+type Equatable interface {
+	Equal(v Equatable) bool
+}
+
 // A Set is a collection of keyed values.
 type Set map[int]Comparable
 
 // New returns a set mapping the range of keys [0,n) to each value.
-func New(S []Comparable) Set {
+func New(S ...Comparable) Set {
 	B := make(Set)
 	for k := range S {
 		B[k] = S[k]
@@ -22,62 +27,20 @@ func New(S []Comparable) Set {
 	return B
 }
 
-// Copy a set.
-func Copy(A Set) Set {
-	B := make(Set)
-	for k := range A {
-		B[k] = A[k]
-	}
-
-	return B
-}
-
-// ToSlice exports a set to a slice.
-func ToSlice(A Set) []Comparable {
-	S := make([]Comparable, 0, len(A))
-	for k := range A {
-		S = append(S, A[k])
-	}
-
-	return S
-}
-
-// Equal returns true if A and B each contain the same values. Note that the keys may differ.
-func Equal(A, B Set) bool {
-	if len(A) != len(B) {
-		return false
-	}
-
-	for k := range A {
-		if _, ok := Contains(B, A[k]); !ok {
-			return false
-		}
-	}
-
-	return true
-}
-
-// Sort returns a sorted set with new keys on the range [0,n).
-func Sort(A Set, less func(i, j int) bool) Set {
-	S := ToSlice(A)
-	sort.Slice(S, less)
-	return New(S)
-}
-
 // Insert a value into a set. Returns the key. Duplicate values will not be inserted, but the current key of the existing value will be returned.
-func Insert(A Set, v Comparable) (Set, int) {
-	k, ok := Contains(A, v)
+func (S Set) Insert(v Comparable) int {
+	k, ok := S.Contains(v)
 	if !ok {
-		A[k] = v
+		S[k] = v
 	}
 
-	return A, k
+	return k
 }
 
-// Remove and return a value from a set.
-func Remove(A Set, k int) Comparable {
-	if v, ok := A[k]; ok {
-		delete(A, k)
+// Remove and return a value from a set. Returns nil if value not found.
+func (S Set) Remove(k int) Comparable {
+	if v, ok := S[k]; ok {
+		delete(S, k)
 		return v
 	}
 
@@ -85,15 +48,15 @@ func Remove(A Set, k int) Comparable {
 }
 
 // Contains returns the key of a value and true if it is found. If not, then the next available key and false is returned.
-func Contains(A Set, v Comparable) (int, bool) {
-	n := len(A)
+func (S Set) Contains(v Comparable) (int, bool) {
+	n := len(S)
 	if n == 0 {
 		return 0, false
 	}
 
 	keys := make([]int, 0, n)
-	for k := range A {
-		if A[k].CompareTo(v) == 0 {
+	for k := range S {
+		if S[k].CompareTo(v) == 0 {
 			return k, true
 		}
 
@@ -110,104 +73,171 @@ func Contains(A Set, v Comparable) (int, bool) {
 	return n, false
 }
 
-// Intersection of A and B returns a set containing values found in both A and B (AnB).
-func Intersection(A, B Set) Set {
-	if len(A) < len(B) {
-		C := make(Set)
+// Intersect of A and B returns a set containing values found in both A and B (AnB).
+func (S Set) Intersect(T Set) Set {
+	if len(S) < len(T) {
+		U := make(Set)
 		var k int
-		for _, v := range A {
-			if _, ok := B[k]; ok {
-				C[k] = v
+		for _, v := range S {
+			if _, ok := T[k]; ok {
+				U[k] = v
 				k++
 			}
 		}
 
-		return C
+		return U
 	}
 
-	return Intersection(B, A)
+	return T.Intersect(S)
 }
 
-// IntersectionMany several sets.
-func IntersectionMany(As ...Set) Set {
-	A := make(Set)
-	for i := range As {
-		A = Intersection(A, As[i])
+// Intersection several sets.
+func Intersection(S ...Set) Set {
+	T := make(Set)
+	for i := range S {
+		T = T.Intersect(S[i])
 	}
 
-	return A
+	return T
 }
 
 // Union of A and B returns a set containing values in either A or B (AuB). It is synonymous with joining or combining sets.
-func Union(A, B Set) Set {
-	C := make(Set)
+func (S Set) Union(T Set) Set {
+	U := make(Set)
 	var k int
-	for _, v := range A {
-		C[k] = v
+	for _, v := range S {
+		U[k] = v
 		k++
 	}
 
-	for _, v := range B {
-		if _, ok := Contains(A, v); !ok {
-			C[k] = v
+	for _, v := range T {
+		if _, ok := S.Contains(v); !ok {
+			U[k] = v
 			k++
 		}
 	}
 
-	return C
+	return U
 }
 
-// UnionMany several sets.
-func UnionMany(As ...Set) Set {
-	A := make(Set)
-	for i := range As {
-		A = Union(A, As[i])
+// Union several sets.
+func Union(S ...Set) Set {
+	T := make(Set)
+	for i := range S {
+		T = T.Union(S[i])
 	}
 
-	return A
+	return T
 }
 
 // LeftDisjoint returs a set containing values in A, but not B (A-B).
-func LeftDisjoint(A, B Set) Set {
-	C := make(Set)
+func (S Set) LeftDisjoint(T Set) Set {
+	U := make(Set)
 	var k int
-	for _, v := range A {
-		if _, ok := Contains(B, v); !ok {
-			C[k] = v
+	for _, v := range S {
+		if _, ok := T.Contains(v); !ok {
+			U[k] = v
 			k++
 		}
 	}
 
-	return C
+	return U
 }
 
 // RightDisjoint returns a set containing values in B, but not A (B-A).
-func RightDisjoint(A, B Set) Set {
-	return LeftDisjoint(B, A)
+func (S Set) RightDisjoint(T Set) Set {
+	return T.LeftDisjoint(S)
 }
 
 // Disjoint returns a set containing values in A and B, but not in both A and B ((AuB)-(AnB)).
-func Disjoint(A, B Set) Set {
-	C := make(Set)
+func (S Set) Disjoint(T Set) Set {
+	U := make(Set)
 	var k int
-	for _, v := range A {
-		if _, ok := Contains(B, v); !ok {
-			C[k] = v
+	for _, v := range S {
+		if _, ok := T.Contains(v); !ok {
+			U[k] = v
 			k++
 		}
 	}
 
-	for _, v := range B {
-		if _, ok := Contains(A, v); !ok {
-			C[k] = v
+	for _, v := range T {
+		if _, ok := S.Contains(v); !ok {
+			U[k] = v
 			k++
 		}
 	}
 
-	return C
+	return U
 }
 
 // Cardinality returns the number of values in a set.
-func Cardinality(A Set) int {
-	return len(A)
+func (S Set) Cardinality() int {
+	return len(S)
+}
+
+// CompareTo compares sorted sets.
+func (S Set) CompareTo(T Set) int {
+	m, n := len(S), len(T)
+	// TODO: do this last.
+	switch {
+	case m < n:
+		return -1
+	case n < m:
+		return 1
+	}
+
+	s, t := S.ToSlice(), T.ToSlice()
+	sort.Slice(s, func(i, j int) bool { return s[i].CompareTo(s[j]) < 0 })
+	sort.Slice(t, func(i, j int) bool { return t[i].CompareTo(t[j]) < 0 })
+
+	var c int
+	for i := 0; i < m; i++ {
+		if c = s[i].CompareTo(t[i]); c != 0 {
+			return c
+		}
+	}
+
+	return 0
+}
+
+// Equal returns true if A and B each contain the same values. Note that the keys may differ.
+func (S Set) Equal(T Set) bool {
+	if len(S) != len(T) {
+		return false
+	}
+
+	for k := range S {
+		if _, ok := T.Contains(S[k]); !ok {
+			return false
+		}
+	}
+
+	return true
+}
+
+// Copy a set.
+func (S Set) Copy() Set {
+	T := make(Set)
+	for k := range S {
+		T[k] = S[k]
+	}
+
+	return T
+}
+
+// ToSlice exports a set to a slice.
+func (S Set) ToSlice() []Comparable {
+	T := make([]Comparable, 0, len(S))
+	for k := range S {
+		T = append(T, S[k])
+	}
+
+	return T
+}
+
+// Sort returns a sorted set with new keys on the range [0,n).
+func (S Set) Sort() Set {
+	T := S.ToSlice()
+	sort.Slice(T, func(i, j int) bool { return T[i].CompareTo(T[j]) < 0 })
+	return New(T...)
 }

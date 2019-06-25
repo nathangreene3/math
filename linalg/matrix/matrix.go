@@ -48,11 +48,6 @@ func Identity(m, n int) Matrix {
 	return New(m, n, func(i, j int) float64 { return float64((i + j) % 2) }) // Note: this generating function is called the Kronecker delta and is typically denoted as d(i,j)
 }
 
-// At returns the (i,j)th value.
-func (A Matrix) At(i, j int) float64 {
-	return A[i][j]
-}
-
 // Dimensions returns the Dimensions (number of rows, number of
 // columns) of a matrix. Panics if number of columns is not constant
 // for each row.
@@ -74,7 +69,7 @@ func (A Matrix) Dimensions() (int, int) {
 // Mathematical operations on matrices.
 // ------------------------------------------------------------------
 
-// Add returns the sum of two matrices. Panics of the matrices are not equal in dimension.
+// Add returns the sum of two matrices.
 func Add(A, B Matrix) Matrix {
 	ma, na := A.Dimensions()
 	mb, nb := B.Dimensions()
@@ -471,9 +466,9 @@ func Pow(A Matrix, p int) Matrix {
 // Operations that assist elementary operations.
 // ------------------------------------------------------------------
 
-// Compare returns -1, 0, 1 indicating A precedes, is equal to, or
+// CompareTo returns -1, 0, 1 indicating A precedes, is equal to, or
 // follows B. Panics if matrices are not of equal dimension.
-func Compare(A, B Matrix) int {
+func CompareTo(A, B Matrix) int {
 	ma, na := A.Dimensions()
 	mb, nb := B.Dimensions()
 	if ma != mb || na != nb {
@@ -495,16 +490,16 @@ func Compare(A, B Matrix) int {
 	return 0
 }
 
-// Compare returns -1, 0, 1 indicating A precedes, is equal to, or
+// CompareTo returns -1, 0, 1 indicating A precedes, is equal to, or
 // follows B. Panics if matrices are not of equal dimension.
-func (A Matrix) Compare(B Matrix) int {
-	return Compare(A, B)
+func (A Matrix) CompareTo(B Matrix) int {
+	return CompareTo(A, B)
 }
 
 // Equals returns true if two matrices are equal in dimension and
 // for each entry. Otherwise, it returns false.
 func Equals(A, B Matrix) bool {
-	return Compare(A, B) == 0
+	return CompareTo(A, B) == 0
 }
 
 // Equals returns true if two matrices are equal in dimension and
@@ -516,7 +511,7 @@ func (A Matrix) Equals(B Matrix) bool {
 // Sort A such that the largest leading indices are at the top
 // (index 0 is the top).
 func (A Matrix) Sort() {
-	sort.SliceStable(A, func(i, j int) bool { return 0 < A[i].Compare(A[j]) })
+	sort.SliceStable(A, func(i, j int) bool { return 0 < A[i].CompareTo(A[j]) })
 }
 
 // String returns a formatted string representation of a matrix.

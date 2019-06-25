@@ -32,33 +32,15 @@ func New(n int, f Generator) Vector {
 	return v
 }
 
-// At returns the ith value.
-func (v Vector) At(i int) float64 {
-	return v[i]
-}
-
-// Length returns |v|.
-func Length(v Vector) float64 {
-	return math.Sqrt(Dot(v, v))
-}
-
 // Length returns |v|.
 func (v Vector) Length() float64 {
-	return math.Sqrt(Dot(v, v))
+	return math.Sqrt(v.Dot(v))
 }
 
 // Add returns v+w.
 func Add(v, w Vector) Vector {
-	n := len(v)
-	if n != len(w) {
-		panic("dimension mismatch")
-	}
-
-	u := make(Vector, 0, n)
-	for i := 0; i < n; i++ {
-		u = append(u, v[i]+w[i])
-	}
-
+	u := v.Copy()
+	u.Add(w)
 	return u
 }
 
@@ -74,30 +56,22 @@ func (v Vector) Add(w Vector) {
 	}
 }
 
-// Subtract w from v.
-func (v Vector) Subtract(w Vector) {
-	n := len(v)
-	if n != len(w) {
-		panic("dimension mismatch")
-	}
-
-	for i := 0; i < n; i++ {
-		v[i] -= w[i]
-	}
-}
-
 // Subtract returns v-w.
 func Subtract(v, w Vector) Vector {
-	return Add(v, Multiply(-1, w))
+	u := v.Copy()
+	u.Subtract(w)
+	return u
+}
+
+// Subtract w from v.
+func (v Vector) Subtract(w Vector) {
+	v.Add(Multiply(-1, w))
 }
 
 // Multiply returns av.
 func Multiply(a float64, v Vector) Vector {
-	w := make(Vector, 0, len(v))
-	for i := range v {
-		w = append(w, a*v[i])
-	}
-
+	w := v.Copy()
+	w.Multiply(a)
 	return w
 }
 
@@ -119,21 +93,6 @@ func (v Vector) divide(a float64) {
 }
 
 // Dot returns v dot w.
-func Dot(v, w Vector) float64 {
-	n := len(v)
-	if n != len(w) {
-		panic("dimension mismatch")
-	}
-
-	var s float64
-	for i := 0; i < n; i++ {
-		s += v[i] * w[i]
-	}
-
-	return s
-}
-
-// Dot returns v dot w.
 func (v Vector) Dot(w Vector) float64 {
 	n := len(w)
 	if n != len(v) {
@@ -149,18 +108,8 @@ func (v Vector) Dot(w Vector) float64 {
 }
 
 // Unit returns v/|v|, a vector of length one pointing in the direction of v.
-func Unit(v Vector) Vector {
-	return Multiply(1.0/v.Length(), v)
-}
-
-// Unit returns v/|v|, a vector of length one pointing in the direction of v.
 func (v Vector) Unit() Vector {
 	return Multiply(1.0/v.Length(), v)
-}
-
-// Angle returns the angle between two vectors.
-func Angle(v, w Vector) float64 {
-	return math.Acos(Dot(Unit(v), Unit(w)))
 }
 
 // Angle returns the Angle between two vectors.
@@ -169,15 +118,9 @@ func (v Vector) Angle(w Vector) float64 {
 }
 
 // Projection returns the projection of w onto v (proj_v(w)).
-func Projection(v, w Vector) Vector {
-	lenv := w.Length()
-	return Multiply(Dot(v, w)/(lenv*lenv), w)
-}
-
-// Projection returns the projection of w onto v (proj_v(w)).
 func (v Vector) Projection(w Vector) Vector {
 	r := v.Length()
-	return Multiply(Dot(w, v)/(r*r), v)
+	return Multiply(w.Dot(v)/(r*r), v)
 }
 
 // Rotate2D returns a vector rotated from v's position by an angle b in radians.
@@ -220,64 +163,32 @@ func (v Vector) Copy() Vector {
 	return w
 }
 
-// Compare returns -1, 0, or 1 indicating v precedes, is equal to, or follows w. Vectors v and w may be of different dimensions.
-func Compare(v, w Vector) int {
+// CompareTo returns -1, 0, or 1 indicating v precedes, is equal to, or follows w. Vectors v and w may be of different dimensions.
+func (v Vector) CompareTo(w Vector) int {
 	m, n := len(v), len(w)
 	min := stats.MinInt(m, n)
 	for i := 0; i < min; i++ {
-		if v[i] < w[i] {
+		switch {
+		case v[i] < w[i]:
 			return -1
-		}
-
-		if w[i] < v[i] {
+		case w[i] < v[i]:
 			return 1
 		}
 	}
 
-	if m < n {
+	switch {
+	case m < n:
 		return -1
-	}
-
-	if n < m {
+	case n < m:
 		return 1
+	default:
+		return 0
 	}
-
-	return 0
-}
-
-// Compare returns -1, 0, or 1 indicating v precedes, is equal to, or follows w. Vectors v and w may be of different dimensions.
-func (v Vector) Compare(w Vector) int {
-	m, n := len(v), len(w)
-	min := stats.MinInt(m, n)
-	for i := 0; i < min; i++ {
-		if v[i] < w[i] {
-			return -1
-		}
-
-		if w[i] < v[i] {
-			return 1
-		}
-	}
-
-	if m < n {
-		return -1
-	}
-
-	if n < m {
-		return 1
-	}
-
-	return 0
-}
-
-// Equal returns the comparison v = w.
-func Equal(v, w Vector) bool {
-	return Compare(v, w) == 0
 }
 
 // Equal returns the comparison v = w.
 func (v Vector) Equal(w Vector) bool {
-	return v.Compare(w) == 0
+	return v.CompareTo(w) == 0
 }
 
 // String returns a string-representation of a vector.
@@ -286,20 +197,20 @@ func (v Vector) String() string {
 }
 
 // IsMultipleOf returns true if either v or w is a multiple of the other (v = aw for some real a).
-func IsMultipleOf(v, w Vector) bool {
+func (v Vector) IsMultipleOf(w Vector) bool {
 	n := len(v)
 	if n != len(w) {
 		return false
 	}
 
-	vToW := v.Compare(w)
+	vToW := v.CompareTo(w)
 	if vToW == 0 || n == 0 {
 		return true
 	}
 
 	z := make(Vector, n)
-	vToZ := v.Compare(z)
-	wToZ := w.Compare(z)
+	vToZ := v.CompareTo(z)
+	wToZ := w.CompareTo(z)
 	if vToZ == 0 || wToZ == 0 {
 		return false
 	}
@@ -314,11 +225,11 @@ func IsMultipleOf(v, w Vector) bool {
 		w = Multiply(-1, w)
 	}
 
-	vToW = v.Compare(w)
+	vToW = v.CompareTo(w)
 	if vToW < 0 {
 		for {
 			w.Subtract(v)
-			if vToW = v.Compare(w); vToW == 0 {
+			if vToW = v.CompareTo(w); vToW == 0 {
 				return true
 			}
 
@@ -331,7 +242,7 @@ func IsMultipleOf(v, w Vector) bool {
 	if 0 < vToW {
 		for {
 			v.Subtract(w)
-			if vToW = v.Compare(w); vToW == 0 {
+			if vToW = v.CompareTo(w); vToW == 0 {
 				return true
 			}
 
