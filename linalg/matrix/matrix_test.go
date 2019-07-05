@@ -2,6 +2,8 @@ package matrix
 
 import (
 	"testing"
+
+	"github.com/nathangreene3/math/linalg/vector"
 )
 
 func TestMultiply(t *testing.T) {
@@ -27,5 +29,26 @@ func TestMultiply(t *testing.T) {
 	})
 	if !D.Equals(E) {
 		t.Fatalf("\nexpected %s\nreceived %s", E.String(), D.String())
+	}
+}
+
+func TestSolve(t *testing.T) {
+	var c float64
+	A := New(2, 2, func(i, j int) float64 {
+		c++
+		return c
+	})
+	x := A.Solve(vector.New(2, func(i int) float64 {
+		c++
+		return c
+	}))
+	y := vector.New(2, func(i int) float64 {
+		if i == 0 {
+			return -4
+		}
+		return 4.5
+	})
+	if !x.Equal(y) {
+		t.Fatalf("expected %v, received %v", y, x)
 	}
 }

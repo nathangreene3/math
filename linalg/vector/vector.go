@@ -32,7 +32,7 @@ func New(n int, f Generator) Vector {
 	return v
 }
 
-// Length returns |v|.
+// Length returns |v|. This is NOT len(v).
 func (v Vector) Length() float64 {
 	return math.Sqrt(v.Dot(v))
 }
@@ -82,13 +82,13 @@ func (v Vector) Multiply(a float64) {
 	}
 }
 
-// divide returns v/a.
-func divide(a float64, v Vector) Vector {
+// Divide returns v/a.
+func Divide(a float64, v Vector) Vector {
 	return Multiply(1.0/a, v)
 }
 
-// divide each value by a.
-func (v Vector) divide(a float64) {
+// Divide each value by a.
+func (v Vector) Divide(a float64) {
 	v.Multiply(1.0 / a)
 }
 

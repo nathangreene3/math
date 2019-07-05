@@ -71,13 +71,9 @@ func (A Matrix) Dimensions() (int, int) {
 
 // Add returns the sum of two matrices.
 func Add(A, B Matrix) Matrix {
-	ma, na := A.Dimensions()
-	mb, nb := B.Dimensions()
-	if ma != mb || na != nb {
-		panic("matrices must have the same number of rows and columns")
-	}
-
-	return New(ma, na, func(i, j int) float64 { return A[i][j] + B[i][j] })
+	C := A.Copy()
+	C.Add(B)
+	return C
 }
 
 // Add B to A.
@@ -97,13 +93,9 @@ func (A Matrix) Add(B Matrix) {
 
 // Subtract returns A-B.
 func Subtract(A, B Matrix) Matrix {
-	ma, na := A.Dimensions()
-	mb, nb := B.Dimensions()
-	if ma != mb || na != nb {
-		panic("matrices must have the same number of rows and columns")
-	}
-
-	return New(ma, na, func(i, j int) float64 { return A[i][j] - B[i][j] })
+	C := A.Copy()
+	C.Subtract(B)
+	return C
 }
 
 // Subtract B from A.
@@ -122,17 +114,17 @@ func (A Matrix) Subtract(B Matrix) {
 }
 
 // Multiply several matrices.
-func Multiply(As ...Matrix) Matrix {
+func Multiply(A ...Matrix) Matrix {
 	// Source: chrome-extension://oemmndcbldboiebfnladdacbdfmadadm/https://home.cse.ust.hk/~dekai/271/notes/L12/L12.pdf
 
-	n := len(As)
+	n := len(A)
 	switch n {
 	case 0:
 		return nil
 	case 1:
-		return As[0]
+		return A[0]
 	case 2:
-		return multiply(As[0], As[1])
+		return A[0].multiply(A[1])
 	}
 
 	var (
@@ -142,11 +134,11 @@ func Multiply(As ...Matrix) Matrix {
 		j, cost int
 	)
 	for i := 0; i < n; i++ {
-		dims = append(dims, len(As[i]))
+		dims = append(dims, len(A[i]))
 		cache = append(cache, make([]int, n))
 		order = append(order, make([]int, n))
 	}
-	dims = append(dims, len(As[n-1][0]))
+	dims = append(dims, len(A[n-1][0]))
 
 	for h := 1; h < n; h++ {
 		for i := 0; i < n-h; i++ {
@@ -162,20 +154,20 @@ func Multiply(As ...Matrix) Matrix {
 		}
 	}
 
-	return multiplyByOrder(order, 0, n-1, As...)
+	return multiplyByOrder(order, 0, n-1, A...)
 }
 
 // multiplyByOrder returns the product of matrices by multiplying by a given order. Initiate by calling on i = 0 and j = n-1.
 func multiplyByOrder(s [][]int, i, j int, As ...Matrix) Matrix {
 	if i < j {
-		return multiply(multiplyByOrder(s, i, s[i][j], As...), multiplyByOrder(s, s[i][j]+1, j, As...))
+		return multiplyByOrder(s, i, s[i][j], As...).multiply(multiplyByOrder(s, s[i][j]+1, j, As...))
 	}
 
 	return As[i]
 }
 
 // multiply returns AB. To multiply by a vector, convert the vector to a column matrix.
-func multiply(A, B Matrix) Matrix {
+func (A Matrix) multiply(B Matrix) Matrix {
 	ma, na := A.Dimensions()
 	mb, nb := B.Dimensions()
 	if na != mb {
@@ -265,7 +257,6 @@ func MultiplyRow(A Matrix, i int, a float64) Matrix {
 		if i == j {
 			return a * A[j][k]
 		}
-
 		return A[j][k]
 	}
 
@@ -274,9 +265,7 @@ func MultiplyRow(A Matrix, i int, a float64) Matrix {
 
 // MultiplyRow by a.
 func (A Matrix) MultiplyRow(i int, a float64) {
-	for j := range A[i] {
-		A[i][j] *= a
-	}
+	A[i].Multiply(a)
 }
 
 // MultiplyColumn returns A with the ith col multiplied by a.
@@ -286,7 +275,6 @@ func MultiplyColumn(A Matrix, i int, a float64) Matrix {
 		if i == k {
 			return a * A[j][k]
 		}
-
 		return A[j][k]
 	}
 
@@ -302,57 +290,46 @@ func (A Matrix) MultiplyColumn(i int, a float64) {
 
 // AddRowToRow returns A with row j added to row i.
 func AddRowToRow(A Matrix, i, j int) Matrix {
-	m, n := A.Dimensions()
-	f := func(a, b int) float64 {
-		if a == i {
-			return A[i][b] + A[j][b]
-		}
-
-		return A[a][b]
-	}
-
-	return New(m, n, f)
+	B := A.Copy()
+	B.AddRowToRow(i, j)
+	return B
 }
 
 // AddRowToRow adds row j to row i.
 func (A Matrix) AddRowToRow(i, j int) {
-	for k := range A[i] {
-		A[i][k] += A[j][k]
-	}
+	A[i].Add(A[j])
 }
 
 // SubtractRowFromRow returns A with row j subtracted from row i.
 func SubtractRowFromRow(A Matrix, i, j int) Matrix {
-	m, n := A.Dimensions()
-	f := func(a, b int) float64 {
-		if a == i {
-			return A[a][b] - A[j][b]
+	var (
+		m, n = A.Dimensions()
+		f    = func(a, b int) float64 {
+			if a == i {
+				return A[a][b] - A[j][b]
+			}
+			return A[a][b]
 		}
-
-		return A[a][b]
-	}
-
+	)
 	return New(m, n, f)
 }
 
 // SubtractRowFromRow subtracts row j from row i.
 func (A Matrix) SubtractRowFromRow(i, j int) {
-	for k := range A[i] {
-		A[i][k] -= A[j][k]
-	}
+	A[i].Subtract(A[j])
 }
 
 // AddColToCol returns A with column j to column i.
 func AddColToCol(A Matrix, i, j int) Matrix {
-	m, n := A.Dimensions()
-	f := func(a, b int) float64 {
-		if b == i {
-			return A[a][b] + A[a][j]
+	var (
+		m, n = A.Dimensions()
+		f    = func(a, b int) float64 {
+			if b == i {
+				return A[a][b] + A[a][j]
+			}
+			return A[a][b]
 		}
-
-		return A[a][b]
-	}
-
+	)
 	return New(m, n, f)
 }
 
@@ -364,28 +341,28 @@ func (A Matrix) AddColToCol(i, j int) {
 }
 
 // SwapRows returns A with rows i and j swapped.
-func SwapRows(i, j int, A Matrix) Matrix {
-	m, n := A.Dimensions()
-	f := func(a, b int) float64 {
-		switch a {
-		case i:
-			return A[j][b]
-		case j:
-			return A[i][b]
-		default:
-			return A[a][b]
+func SwapRows(A Matrix, i, j int) Matrix {
+	var (
+		m, n = A.Dimensions()
+		f    = func(a, b int) float64 {
+			switch a {
+			case i:
+				return A[j][b]
+			case j:
+				return A[i][b]
+			default:
+				return A[a][b]
+			}
 		}
-	}
-
+	)
 	return New(m, n, f)
 }
 
 // SwapRows swaps two rows.
 func (A Matrix) SwapRows(i, j int) {
-	for k, v := range A[i] {
-		A[i][k] = A[j][k]
-		A[i][k] = v
-	}
+	temp := A[i]
+	A[i] = A[j]
+	A[j] = temp
 }
 
 // Determinant returns the Determinant of a square matrix. Panics if matrix is empty or not a square.
@@ -407,24 +384,26 @@ func (A Matrix) Determinant() float64 {
 		return A[0][0]*A[1][1] - A[0][1]*A[1][0]
 	case 3:
 		return A[0][0]*(A[1][2]*A[2][2]-A[1][2]*A[2][1]) - A[0][1]*(A[1][0]*A[2][2]-A[1][2]*A[2][0]) + A[0][2]*(A[1][0]*A[2][1]-A[1][1]*A[2][0])
-	}
+	default:
+		// This is probably terrible...
+		var (
+			a = 1.0
+			d float64
+			B = A.RemoveRow(0)
+		)
+		for i := 0; 0 < m; i++ {
+			d += a * A[0][i] * B.RemoveColumn(i).Determinant()
+			a *= -1
+		}
 
-	var (
-		a = float64(1)
-		d float64
-	)
-	for i := 0; 0 < m; i++ {
-		d += a * A[0][i] * RemoveColumn(RemoveRow(A, 0), i).Determinant()
-		a *= -1
+		return d
 	}
-
-	return d
 }
 
 // tildeA TODO: Rename this.
 func (A Matrix) tildeA(i, j int) Matrix {
 	// LinAlg pg 197
-	return RemoveColumn(RemoveRow(A, i), j)
+	return A.RemoveRow(i).RemoveColumn(j)
 }
 
 // Transpose returns the transpose of a matrix.
@@ -460,6 +439,92 @@ func Pow(A Matrix, p int) Matrix {
 	return B
 }
 
+// Solve Ax=b for x.
+func (A Matrix) Solve(b vector.Vector) vector.Vector {
+	var (
+		B    = A.Join(ColumnMatrix(b)).Reduce()
+		m, n = B.Dimensions()
+	)
+	for i := 1; i < m; i++ {
+		for j := i; j < m; j++ {
+			if B[j][j-1] != 0 {
+				B[j].Divide(B[j][j-1])
+				B[j].Multiply(B[j-1][j-1])
+				B[j].Subtract(B[i-1])
+			}
+		}
+	}
+
+	for i := m - 2; 0 <= i; i-- {
+		for j := i; 0 <= j; j-- {
+			if B[j][j+1] != 0 {
+				B[j].Divide(B[j][j+1])
+				B[j].Multiply(B[j+1][j+1])
+				B[j].Subtract(B[i+1])
+			}
+		}
+	}
+
+	for i := range B {
+		if B[i][i] != 0 {
+			B[i].Divide(B[i][i])
+		}
+	}
+
+	return vector.New(m, func(i int) float64 { return B[i][n-1] }) // x = A^-1*b
+}
+
+// Inverse of a square matrix. Caution: not all matrices, even square ones, are guarenteed to be invertible.
+func (A Matrix) Inverse() Matrix {
+	m, n := A.Dimensions()
+	if m != n {
+		panic("invalid dimensions")
+	}
+
+	B := A.Join(Identity(m, m))
+	for i := 1; i < m; i++ {
+		for j := i; j < m; j++ {
+			if B[j][j-1] != 0 {
+				B[j].Divide(B[j][j-1])
+				B[j].Multiply(B[j-1][j-1])
+				B[j].Subtract(B[i-1])
+			}
+		}
+	}
+
+	for i := m - 2; 0 <= i; i-- {
+		for j := i; 0 <= j; j-- {
+			if B[j][j+1] != 0 {
+				B[j].Divide(B[j][j+1])
+				B[j].Multiply(B[j+1][j+1])
+				B[j].Subtract(B[i+1])
+			}
+		}
+	}
+
+	for i := range B {
+		if B[i][i] != 0 {
+			B[i].Divide(B[i][i])
+		}
+	}
+
+	return New(m, m, func(i, j int) float64 { return B[i+m][j] })
+}
+
+// Vector converts a row or column matrix to a vector.
+func (A Matrix) Vector() vector.Vector {
+	m, n := A.Dimensions()
+	if m == 1 {
+		return vector.New(n, func(i int) float64 { return A[0][i] })
+	}
+
+	if n == 1 {
+		return vector.New(m, func(i int) float64 { return A[i][0] })
+	}
+
+	panic("invalid dimensions")
+}
+
 // ------------------------------------------------------------------
 // ADDITIONAL OPERATIONS ON MATRICES
 // ------------------------------------------------------------------
@@ -468,7 +533,7 @@ func Pow(A Matrix, p int) Matrix {
 
 // CompareTo returns -1, 0, 1 indicating A precedes, is equal to, or
 // follows B. Panics if matrices are not of equal dimension.
-func CompareTo(A, B Matrix) int {
+func (A Matrix) CompareTo(B Matrix) int {
 	ma, na := A.Dimensions()
 	mb, nb := B.Dimensions()
 	if ma != mb || na != nb {
@@ -490,22 +555,10 @@ func CompareTo(A, B Matrix) int {
 	return 0
 }
 
-// CompareTo returns -1, 0, 1 indicating A precedes, is equal to, or
-// follows B. Panics if matrices are not of equal dimension.
-func (A Matrix) CompareTo(B Matrix) int {
-	return CompareTo(A, B)
-}
-
-// Equals returns true if two matrices are equal in dimension and
-// for each entry. Otherwise, it returns false.
-func Equals(A, B Matrix) bool {
-	return CompareTo(A, B) == 0
-}
-
 // Equals returns true if two matrices are equal in dimension and
 // for each entry. Otherwise, it returns false.
 func (A Matrix) Equals(B Matrix) bool {
-	return Equals(A, B)
+	return A.CompareTo(B) == 0
 }
 
 // Sort A such that the largest leading indices are at the top
@@ -516,11 +569,11 @@ func (A Matrix) Sort() {
 
 // String returns a formatted string representation of a matrix.
 func (A Matrix) String() string {
-	sb := strings.Builder{}
-
-	m, n := A.Dimensions()
+	var (
+		sb   = strings.Builder{}
+		m, n = A.Dimensions()
+	)
 	sb.Grow(2*m*(n+1) + 1)
-
 	sb.WriteByte(byte('['))
 	sb.WriteString(A[0].String())
 	for i := 1; i < len(A); i++ {
@@ -550,7 +603,7 @@ func ColumnMatrix(v vector.Vector) Matrix {
 
 // Join returns a matrix that is the joining of two given matrices.
 // Panics if number of rows are not equal.
-func Join(A, B Matrix) Matrix {
+func (A Matrix) Join(B Matrix) Matrix {
 	ma, na := A.Dimensions()
 	mb, nb := B.Dimensions()
 	if ma != mb {
@@ -561,7 +614,6 @@ func Join(A, B Matrix) Matrix {
 		if j < na {
 			return A[i][j]
 		}
-
 		return B[i][j-na]
 	}
 
@@ -570,71 +622,64 @@ func Join(A, B Matrix) Matrix {
 
 // AppendColumn returns a matrix that is the joining of a given
 // matrix with a column Vector.
-func AppendColumn(A Matrix, x vector.Vector) Matrix {
-	return Join(A, ColumnMatrix(x))
+func (A Matrix) AppendColumn(x vector.Vector) Matrix {
+	return A.Join(ColumnMatrix(x))
 }
 
 // AppendRow returns a matrix that is the joining of a given matrix
-// with a row vector. Panics if the vector dimensions are not equal
-// to the number of matrix columns.
-func AppendRow(A Matrix, x vector.Vector) Matrix {
-	m, n := A.Dimensions()
-	if n != len(x) {
+// with a row vector.
+func (A Matrix) AppendRow(x vector.Vector) Matrix {
+	if _, n := A.Dimensions(); n != len(x) {
 		panic("matrix columns must be equal to vector dimensions")
 	}
 
-	f := func(i, j int) float64 {
-		if i < m {
-			return A[i][j]
-		}
-
-		return x[j]
-	}
-
-	return New(m+1, n, f)
+	return append(A, x)
 }
 
 // RemoveRow returns A with row i removed.
-func RemoveRow(A Matrix, i int) Matrix {
-	if m, _ := A.Dimensions(); i+1 < m {
-		return append(A[:i], A[i+1:]...)
+func (A Matrix) RemoveRow(i int) Matrix {
+	m, n := A.Dimensions()
+	f := func(a, b int) float64 {
+		if a < i {
+			return A[a][b]
+		}
+		return A[a+1][b]
 	}
 
-	return A[:i]
+	return New(m, n, f)
 }
 
-// RemoveColumn returns A with column i removed.
-func RemoveColumn(A Matrix, i int) Matrix {
-	if _, n := A.Dimensions(); i+1 < n {
-		for j := range A {
-			A[j] = append(A[j][:i], A[j][i+1:]...)
+// RemoveColumn returns a copy of a matrix with column i removed.
+func (A Matrix) RemoveColumn(i int) Matrix {
+	m, n := A.Dimensions()
+	f := func(a, b int) float64 {
+		if b < i {
+			return A[a][b]
 		}
-	} else {
-		for j := range A {
-			A[j] = A[j][:i]
-		}
+		return A[a][b+1]
 	}
 
-	return A
+	return New(m, n-1, f)
 }
 
-// Reduce returns A with all row multiples removed.
-func Reduce(A Matrix) Matrix {
-	A.Sort()
-	m, _ := A.Dimensions()
+// Reduce returns a sorted copy of a matrix with all row multiples removed.
+func (A Matrix) Reduce() Matrix {
+	B := A.Copy()
+	B.Sort()
+	m, _ := B.Dimensions()
 	for i := 0; i+1 < m; i++ {
 		for j := i + 1; j < m; j++ {
-			if vector.IsMultipleOf(A[i], A[j]) {
-				A = RemoveRow(A, i)
+			if B[i].IsMultipleOf(B[j]) {
+				B = B.RemoveRow(i)
 			}
 		}
 	}
 
-	return A
+	return B
 }
 
 // Cost returns the number of operations to compute AB.
-func Cost(A, B Matrix) int {
+func (A Matrix) Cost(B Matrix) int {
 	ma, na := A.Dimensions()
 	mb, nb := B.Dimensions()
 	if na != mb {
