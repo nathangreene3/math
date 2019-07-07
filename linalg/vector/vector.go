@@ -22,7 +22,8 @@ type Vector []float64
 // Generator is a function defining the i-th entry of a vector.
 type Generator func(i int) float64
 
-// New generates a vector of dimension n with entries defined by a generating function f.
+// New generates a vector of dimension n with entries defined by a
+// generating function f.
 func New(n int, f Generator) Vector {
 	v := make(Vector, 0, n)
 	for i := 0; i < n; i++ {
@@ -32,6 +33,11 @@ func New(n int, f Generator) Vector {
 	return v
 }
 
+// Zero returns the zero vector of n dimensions.
+func Zero(n int) Vector {
+	return make(Vector, n)
+}
+
 // Length returns |v|. This is NOT len(v).
 func (v Vector) Length() float64 {
 	return math.Sqrt(v.Dot(v))
@@ -39,9 +45,12 @@ func (v Vector) Length() float64 {
 
 // Add returns v+w.
 func Add(v, w Vector) Vector {
-	u := v.Copy()
-	u.Add(w)
-	return u
+	n := len(v)
+	if n != len(w) {
+		panic("dimension mismatch")
+	}
+
+	return New(n, func(i int) float64 { return v[i] + w[i] })
 }
 
 // Add w to v.
@@ -58,9 +67,12 @@ func (v Vector) Add(w Vector) {
 
 // Subtract returns v-w.
 func Subtract(v, w Vector) Vector {
-	u := v.Copy()
-	u.Subtract(w)
-	return u
+	n := len(v)
+	if n != len(w) {
+		panic("dimension mismatch")
+	}
+
+	return New(n, func(i int) float64 { return v[i] - w[i] })
 }
 
 // Subtract w from v.
@@ -70,9 +82,7 @@ func (v Vector) Subtract(w Vector) {
 
 // Multiply returns av.
 func Multiply(a float64, v Vector) Vector {
-	w := v.Copy()
-	w.Multiply(a)
-	return w
+	return New(len(v), func(i int) float64 { return a * v[i] })
 }
 
 // Multiply each value by a.
@@ -84,12 +94,14 @@ func (v Vector) Multiply(a float64) {
 
 // Divide returns v/a.
 func Divide(a float64, v Vector) Vector {
-	return Multiply(1.0/a, v)
+	return New(len(v), func(i int) float64 { return v[i] / a })
 }
 
 // Divide each value by a.
 func (v Vector) Divide(a float64) {
-	v.Multiply(1.0 / a)
+	for i := range v {
+		v[i] /= a
+	}
 }
 
 // Dot returns v dot w.
@@ -107,9 +119,10 @@ func (v Vector) Dot(w Vector) float64 {
 	return s
 }
 
-// Unit returns v/|v|, a vector of length one pointing in the direction of v.
+// Unit returns v/|v|, a vector of length one pointing in the
+// direction of v.
 func (v Vector) Unit() Vector {
-	return Multiply(1.0/v.Length(), v)
+	return Divide(v.Length(), v)
 }
 
 // Angle returns the Angle between two vectors.
@@ -123,7 +136,8 @@ func (v Vector) Projection(w Vector) Vector {
 	return Multiply(w.Dot(v)/(r*r), v)
 }
 
-// Rotate2D returns a vector rotated from v's position by an angle b in radians.
+// Rotate2D returns a vector rotated from v's position by an angle b
+// in radians.
 func Rotate2D(v Vector, angle float64) Vector {
 	sin, cos := math.Sin(angle), math.Cos(angle)
 	return Vector{
@@ -132,14 +146,16 @@ func Rotate2D(v Vector, angle float64) Vector {
 	}
 }
 
-// Rotate2D returns a vector rotated from v's position by an angle in radians.
+// Rotate2D returns a vector rotated from v's position by an angle in
+// radians.
 func (v Vector) Rotate2D(angle float64) {
 	v0, v1 := v[0], v[1]
 	sin, cos := math.Sin(angle), math.Cos(angle)
 	v[0], v[1] = v0*cos-v1*sin, v0*sin+v1*cos
 }
 
-// OrthonormalBasis returns the typical set of unit vectors spanning R^n.
+// OrthonormalBasis returns the typical set of unit vectors spanning
+// R^n.
 func OrthonormalBasis(n int) []Vector {
 	b := make([]Vector, 0, n)
 	for i := 0; i < n; i++ {
@@ -149,7 +165,8 @@ func OrthonormalBasis(n int) []Vector {
 	return b
 }
 
-// OrthonormalVector returns the vector (0,...,0,1,0,...,0) of length n and the ith value set to 1.
+// OrthonormalVector returns the vector (0,...,0,1,0,...,0) of length
+// n and the ith value set to 1.
 func OrthonormalVector(i, n int) Vector {
 	v := make(Vector, n)
 	v[i]++
@@ -163,7 +180,8 @@ func (v Vector) Copy() Vector {
 	return w
 }
 
-// CompareTo returns -1, 0, or 1 indicating v precedes, is equal to, or follows w. Vectors v and w may be of different dimensions.
+// CompareTo returns -1, 0, or 1 indicating v precedes, is equal to,
+// or follows w. Vectors v and w may be of different dimensions.
 func (v Vector) CompareTo(w Vector) int {
 	m, n := len(v), len(w)
 	min := stats.MinInt(m, n)
@@ -196,59 +214,41 @@ func (v Vector) String() string {
 	return fmt.Sprintf("%0.3f", v) // TODO: Find the fastest way to stringify slices.
 }
 
-// IsMultipleOf returns true if either v or w is a multiple of the other (v = aw for some real a).
+// IsMultipleOf returns true if either v or w is a multiple of the
+// other (v = aw for some real a).
 func (v Vector) IsMultipleOf(w Vector) bool {
+	if v.CompareTo(w) == 0 {
+		return true
+	}
+
 	n := len(v)
 	if n != len(w) {
 		return false
 	}
 
-	vToW := v.CompareTo(w)
-	if vToW == 0 || n == 0 {
-		return true
-	}
-
-	z := make(Vector, n)
-	vToZ := v.CompareTo(z)
-	wToZ := w.CompareTo(z)
-	if vToZ == 0 || wToZ == 0 {
-		return false
-	}
-
-	v = v.Copy()
-	w = w.Copy()
-	if vToZ < 0 {
-		v = Multiply(-1, v)
-	}
-
-	if wToZ < 0 {
-		w = Multiply(-1, w)
-	}
-
-	vToW = v.CompareTo(w)
-	if vToW < 0 {
-		for {
-			w.Subtract(v)
-			if vToW = v.CompareTo(w); vToW == 0 {
-				return true
+	// v and w are of the same dimension (n), but for one to be a
+	// multiple of the other, all dimensions must either both be zero,
+	// or neither be zero. This finds the first dimension i such that
+	// v[i] and w[i] are both non-zero. Then it sets the ratio or
+	// checks if ratios are consistent.
+	var r float64 // Ratio of each non-zero dimension in v and w
+	for i := 0; i < n; i++ {
+		switch {
+		case v[i] != 0:
+			switch {
+			case w[i] != 0:
+				if 0 < r {
+					if r != v[i]/w[i] {
+						return false // Ratios not consistent
+					}
+				} else {
+					r = v[i] / w[i] // Ratio should be set only once
+				}
+			default:
+				return false // v[i] != 0, but w[i] == 0
 			}
-
-			if 0 < vToW {
-				return false
-			}
-		}
-	}
-
-	if 0 < vToW {
-		for {
-			v.Subtract(w)
-			if vToW = v.CompareTo(w); vToW == 0 {
-				return true
-			}
-
-			if vToW < 0 {
-				return false
-			}
+		case w[i] != 0:
+			return false // v[i] == 0, but w[i] != 0
 		}
 	}
 

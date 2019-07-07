@@ -9,11 +9,6 @@ type Comparable interface {
 	CompareTo(v Comparable) int
 }
 
-// Equatable defines equality between similar types.
-type Equatable interface {
-	Equal(v Equatable) bool
-}
-
 // A Set is a collection of keyed values.
 type Set map[int]Comparable
 
@@ -175,31 +170,6 @@ func (S Set) Cardinality() int {
 	return len(S)
 }
 
-// CompareTo compares sorted sets.
-func (S Set) CompareTo(T Set) int {
-	m, n := len(S), len(T)
-	// TODO: do this last.
-	switch {
-	case m < n:
-		return -1
-	case n < m:
-		return 1
-	}
-
-	s, t := S.ToSlice(), T.ToSlice()
-	sort.Slice(s, func(i, j int) bool { return s[i].CompareTo(s[j]) < 0 })
-	sort.Slice(t, func(i, j int) bool { return t[i].CompareTo(t[j]) < 0 })
-
-	var c int
-	for i := 0; i < m; i++ {
-		if c = s[i].CompareTo(t[i]); c != 0 {
-			return c
-		}
-	}
-
-	return 0
-}
-
 // Equal returns true if A and B each contain the same values. Note that the keys may differ.
 func (S Set) Equal(T Set) bool {
 	if len(S) != len(T) {
@@ -237,7 +207,7 @@ func (S Set) ToSlice() []Comparable {
 
 // Sort returns a sorted set with new keys on the range [0,n).
 func (S Set) Sort() Set {
-	T := S.ToSlice()
-	sort.Slice(T, func(i, j int) bool { return T[i].CompareTo(T[j]) < 0 })
-	return New(T...)
+	s := S.ToSlice()
+	sort.Slice(s, func(i, j int) bool { return s[i].CompareTo(s[j]) < 0 })
+	return New(s...)
 }

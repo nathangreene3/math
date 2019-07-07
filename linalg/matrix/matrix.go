@@ -157,7 +157,8 @@ func Multiply(A ...Matrix) Matrix {
 	return multiplyByOrder(order, 0, n-1, A...)
 }
 
-// multiplyByOrder returns the product of matrices by multiplying by a given order. Initiate by calling on i = 0 and j = n-1.
+// multiplyByOrder returns the product of matrices by multiplying by
+// a given order. Initiate by calling on i = 0 and j = n-1.
 func multiplyByOrder(s [][]int, i, j int, As ...Matrix) Matrix {
 	if i < j {
 		return multiplyByOrder(s, i, s[i][j], As...).multiply(multiplyByOrder(s, s[i][j]+1, j, As...))
@@ -166,7 +167,8 @@ func multiplyByOrder(s [][]int, i, j int, As ...Matrix) Matrix {
 	return As[i]
 }
 
-// multiply returns AB. To multiply by a vector, convert the vector to a column matrix.
+// multiply returns AB. To multiply by a vector, convert the vector
+// to a column matrix.
 func (A Matrix) multiply(B Matrix) Matrix {
 	ma, na := A.Dimensions()
 	mb, nb := B.Dimensions()
@@ -186,7 +188,8 @@ func (A Matrix) multiply(B Matrix) Matrix {
 	*/
 
 	// Winograd's algorithm
-	// Source: Analysis of Algorithms, 2nd Ed., by Jeffrey J. McConnell, pg 139-140
+	// Source: Analysis of Algorithms, 2nd Ed., by Jeffrey J.
+	// McConnell, pg 139-140
 	var (
 		d      = na / 2
 		rfacts = make([]float64, 0, ma)
@@ -365,7 +368,7 @@ func (A Matrix) SwapRows(i, j int) {
 	A[j] = temp
 }
 
-// Determinant returns the Determinant of a square matrix. Panics if matrix is empty or not a square.
+// Determinant returns the Determinant of a square matrix.
 func (A Matrix) Determinant() float64 {
 	// TODO //
 	m, n := A.Dimensions()
@@ -662,7 +665,8 @@ func (A Matrix) RemoveColumn(i int) Matrix {
 	return New(m, n-1, f)
 }
 
-// Reduce returns a sorted copy of a matrix with all row multiples removed.
+// Reduce returns a sorted copy of a matrix with all row multiples
+// removed.
 func (A Matrix) Reduce() Matrix {
 	B := A.Copy()
 	B.Sort()
