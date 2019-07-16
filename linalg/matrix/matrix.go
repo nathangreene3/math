@@ -52,8 +52,7 @@ func Identity(m, n int) Matrix {
 // columns) of a matrix. Panics if number of columns is not constant
 // for each row.
 func (A Matrix) Dimensions() (int, int) {
-	m := len(A)
-	n := len(A[0])
+	m, n := len(A), len(A[0])
 	for i := range A {
 		if n != len(A[i]) {
 			panic("inconsistent matrix dimensions")
@@ -255,13 +254,15 @@ func (A Matrix) ScalarDivide(a float64) {
 
 // MultiplyRow returns A with the ith row multiplied by a.
 func MultiplyRow(A Matrix, i int, a float64) Matrix {
-	m, n := A.Dimensions()
-	f := func(j, k int) float64 {
-		if i == j {
-			return a * A[j][k]
+	var (
+		m, n = A.Dimensions()
+		f    = func(j, k int) float64 {
+			if i == j {
+				return a * A[j][k]
+			}
+			return A[j][k]
 		}
-		return A[j][k]
-	}
+	)
 
 	return New(m, n, f)
 }
@@ -273,13 +274,15 @@ func (A Matrix) MultiplyRow(i int, a float64) {
 
 // MultiplyColumn returns A with the ith col multiplied by a.
 func MultiplyColumn(A Matrix, i int, a float64) Matrix {
-	m, n := A.Dimensions()
-	f := func(j, k int) float64 {
-		if i == k {
-			return a * A[j][k]
+	var (
+		m, n = A.Dimensions()
+		f    = func(j, k int) float64 {
+			if i == k {
+				return a * A[j][k]
+			}
+			return A[j][k]
 		}
-		return A[j][k]
-	}
+	)
 
 	return New(m, n, f)
 }
@@ -431,7 +434,7 @@ func Pow(A Matrix, p int) Matrix {
 	}
 
 	B := A.Copy()
-	for ; 1 < p; p /= 2 {
+	for ; 1 < p; p >>= 1 {
 		B = Multiply(B, B)
 	}
 
@@ -445,7 +448,7 @@ func Pow(A Matrix, p int) Matrix {
 // Solve Ax=b for x.
 func (A Matrix) Solve(b vector.Vector) vector.Vector {
 	var (
-		B    = A.Join(ColumnMatrix(b)).Reduce()
+		B    = A.Join(ColumnMatrix(b)).RemoveMultiples()
 		m, n = B.Dimensions()
 	)
 	for i := 1; i < m; i++ {
@@ -641,33 +644,37 @@ func (A Matrix) AppendRow(x vector.Vector) Matrix {
 
 // RemoveRow returns A with row i removed.
 func (A Matrix) RemoveRow(i int) Matrix {
-	m, n := A.Dimensions()
-	f := func(a, b int) float64 {
-		if a < i {
-			return A[a][b]
+	var (
+		m, n = A.Dimensions()
+		f    = func(a, b int) float64 {
+			if a < i {
+				return A[a][b]
+			}
+			return A[a+1][b]
 		}
-		return A[a+1][b]
-	}
+	)
 
 	return New(m, n, f)
 }
 
 // RemoveColumn returns a copy of a matrix with column i removed.
 func (A Matrix) RemoveColumn(i int) Matrix {
-	m, n := A.Dimensions()
-	f := func(a, b int) float64 {
-		if b < i {
-			return A[a][b]
+	var (
+		m, n = A.Dimensions()
+		f    = func(a, b int) float64 {
+			if b < i {
+				return A[a][b]
+			}
+			return A[a][b+1]
 		}
-		return A[a][b+1]
-	}
+	)
 
 	return New(m, n-1, f)
 }
 
-// Reduce returns a sorted copy of a matrix with all row multiples
+// RemoveMultiples returns a sorted copy of a matrix with all row multiples
 // removed.
-func (A Matrix) Reduce() Matrix {
+func (A Matrix) RemoveMultiples() Matrix {
 	B := A.Copy()
 	B.Sort()
 	m, _ := B.Dimensions()

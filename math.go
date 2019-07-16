@@ -1,22 +1,47 @@
 package math
 
-// GCD returns the largest divisor of both a and b.
+// Factor returns a map of factors to the number of times they divide
+// an integer n. That is, for each key-value pair (k,v), k divides n
+// v times. Each key will be a prime divisor, which means k will be
+// at least two. An integer is prime if its only Factor is itself
+// (and 1, which is called the empty prime).
+func Factor(n int) map[int]int {
+	if n < 1 {
+		panic("cannot factor non-positive integer")
+	}
+
+	f := make(map[int]int)
+	for ; n%2 == 0; n >>= 1 {
+		f[2]++
+	}
+
+	for k := 3; k <= n; k += 2 {
+		for ; n%k == 0; n /= k {
+			f[k]++
+		}
+	}
+
+	return f
+}
+
+// IsPrime indicates if n is prime.
+func IsPrime(n int) bool {
+	return len(Factor(n)) == 1
+}
+
+// GCD returns the largest divisor of both a and b. If GCD(a,b) == 1,
+// then a and b are relatively prime.
 func GCD(a, b int) int {
 	if a < 0 || b < 0 {
 		panic("invalid sign")
 	}
 
-	var c int
 	if a < b {
-		c = a
-		a = b
-		b = c
+		a, b = b, a
 	}
 
 	for 0 < b {
-		c = a % b
-		a = b
-		b = c
+		a, b = b, a%b
 	}
 
 	return a
@@ -28,44 +53,27 @@ func LCM(a, b int) int {
 		panic("a and b must be positive")
 	}
 
-	m, n := a, b
-	for m != n {
-		for m < n {
-			m += a
+	a1, b1 := a, b
+	for a1 != b1 {
+		for ; a1 < b1; a1 += a {
 		}
 
-		for n < m {
-			n += b
+		for ; b1 < a1; b1 += b {
 		}
-	}
-
-	return m
-}
-
-// Fibonacci returns the nth Fibonacci term, where the 0th and 1st terms are 1 and the nth term is the sum of the previous two terms.
-func Fibonacci(n int) int {
-	a0, a1 := 1, 1
-	var t int
-	for ; 1 < n; n-- {
-		t = a0 + a1
-		a0 = a1
-		a1 = t
 	}
 
 	return a1
 }
 
-func fibDyn(n int) int {
-	if n < 2 {
-		return 1
+// Fibonacci returns the nth Fibonacci term, where the 0th and 1st
+// terms are 1 and the nth term is the sum of the previous two terms.
+func Fibonacci(n int) int {
+	a0, a1 := 1, 1
+	for ; 1 < n; n-- {
+		a0, a1 = a1, a0+a1
 	}
 
-	cache := map[int]int{0: 1, 1: 1}
-	for i := 2; i <= n; i++ {
-		cache[i] = cache[i-1] + cache[i-2]
-	}
-
-	return cache[n]
+	return a1
 }
 
 // Factorial returns n!
@@ -87,7 +95,8 @@ func Choose(n, k int) int {
 	return Pascal(n + 1)[n][k]
 }
 
-// Pascal returns Pascal's triangle, consisting of n levels. The (n,k) entry is the value n!/(k!(n-k)!).
+// Pascal returns Pascal's triangle, consisting of n levels. The
+// (n,k)th entry is the value n!/(k!(n-k)!).
 func Pascal(n int) [][]int {
 	if n < 1 {
 		panic("n must be positive")

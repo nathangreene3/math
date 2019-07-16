@@ -20,7 +20,7 @@ go get github.com/nathangreene3/math/linalg/matrix
 go get github.com/nathangreene3/math/vector
 ```
 
-### set
+## set
 
 ```go
 go get github.com/nathangreene3/math/set

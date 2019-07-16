@@ -1,8 +1,6 @@
 package polynomial
 
 import (
-	"math"
-
 	"github.com/nathangreene3/math/stats"
 )
 
@@ -14,10 +12,13 @@ func (f Polynomial) degree() int {
 }
 
 func (f Polynomial) evaluate(x float64) float64 {
-	var y, pow float64
+	var (
+		y float64
+		p = 1.0
+	)
 	for i := range f {
-		y += f[i] * math.Pow(x, pow)
-		pow++
+		y += f[i] * p
+		p *= x
 	}
 
 	return y

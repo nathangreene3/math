@@ -136,21 +136,25 @@ func (v Vector) Projection(w Vector) Vector {
 	return Multiply(w.Dot(v)/(r*r), v)
 }
 
-// Rotate2D returns a vector rotated from v's position by an angle b
+// Rotate2D returns a vector rotated from v's position by an angle a
 // in radians.
-func Rotate2D(v Vector, angle float64) Vector {
-	sin, cos := math.Sin(angle), math.Cos(angle)
-	return Vector{
-		v[0]*cos - v[1]*sin,
-		v[0]*sin + v[1]*cos,
-	}
+func Rotate2D(v Vector, a float64) Vector {
+	sin, cos := math.Sin(a), math.Cos(a)
+	return New(2, func(i int) float64 {
+		if i == 0 {
+			return v[0]*cos - v[1]*sin
+		}
+		return v[0]*sin + v[1]*cos
+	})
 }
 
 // Rotate2D returns a vector rotated from v's position by an angle in
 // radians.
-func (v Vector) Rotate2D(angle float64) {
-	v0, v1 := v[0], v[1]
-	sin, cos := math.Sin(angle), math.Cos(angle)
+func (v Vector) Rotate2D(a float64) {
+	var (
+		v0, v1   = v[0], v[1]
+		sin, cos = math.Sin(a), math.Cos(a)
+	)
 	v[0], v[1] = v0*cos-v1*sin, v0*sin+v1*cos
 }
 
@@ -171,47 +175,6 @@ func OrthonormalVector(i, n int) Vector {
 	v := make(Vector, n)
 	v[i]++
 	return v
-}
-
-// Copy a vector.
-func (v Vector) Copy() Vector {
-	w := make(Vector, len(v))
-	copy(w, v)
-	return w
-}
-
-// CompareTo returns -1, 0, or 1 indicating v precedes, is equal to,
-// or follows w. Vectors v and w may be of different dimensions.
-func (v Vector) CompareTo(w Vector) int {
-	m, n := len(v), len(w)
-	min := stats.MinInt(m, n)
-	for i := 0; i < min; i++ {
-		switch {
-		case v[i] < w[i]:
-			return -1
-		case w[i] < v[i]:
-			return 1
-		}
-	}
-
-	switch {
-	case m < n:
-		return -1
-	case n < m:
-		return 1
-	default:
-		return 0
-	}
-}
-
-// Equal returns the comparison v = w.
-func (v Vector) Equal(w Vector) bool {
-	return v.CompareTo(w) == 0
-}
-
-// String returns a string-representation of a vector.
-func (v Vector) String() string {
-	return fmt.Sprintf("%0.3f", v) // TODO: Find the fastest way to stringify slices.
 }
 
 // IsMultipleOf returns true if either v or w is a multiple of the
@@ -253,4 +216,45 @@ func (v Vector) IsMultipleOf(w Vector) bool {
 	}
 
 	return true
+}
+
+// Copy a vector.
+func (v Vector) Copy() Vector {
+	w := make(Vector, len(v))
+	copy(w, v)
+	return w
+}
+
+// CompareTo returns -1, 0, or 1 indicating v precedes, is equal to,
+// or follows w. Vectors v and w may be of different dimensions.
+func (v Vector) CompareTo(w Vector) int {
+	m, n := len(v), len(w)
+	min := stats.MinInt(m, n)
+	for i := 0; i < min; i++ {
+		switch {
+		case v[i] < w[i]:
+			return -1
+		case w[i] < v[i]:
+			return 1
+		}
+	}
+
+	switch {
+	case m < n:
+		return -1
+	case n < m:
+		return 1
+	default:
+		return 0
+	}
+}
+
+// Equal returns the comparison v = w.
+func (v Vector) Equal(w Vector) bool {
+	return v.CompareTo(w) == 0
+}
+
+// String returns a string-representation of a vector.
+func (v Vector) String() string {
+	return fmt.Sprintf("%0.3f", v) // TODO: Find the fastest way to stringify slices.
 }

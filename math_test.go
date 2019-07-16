@@ -59,6 +59,44 @@ func TestGCD(t *testing.T) {
 	}
 }
 
+func TestFactor(t *testing.T) {
+	tests := []struct {
+		n                  int
+		expected, received map[int]int
+	}{
+		{n: 1, expected: map[int]int{}},
+		{n: 2, expected: map[int]int{2: 1}},
+		{n: 3, expected: map[int]int{3: 1}},
+		{n: 4, expected: map[int]int{2: 2}},
+		{n: 5, expected: map[int]int{5: 1}},
+		{n: 6, expected: map[int]int{2: 1, 3: 1}},
+		{n: 7, expected: map[int]int{7: 1}},
+		{n: 8, expected: map[int]int{2: 3}},
+		{n: 9, expected: map[int]int{3: 2}},
+		{n: 10, expected: map[int]int{2: 1, 5: 1}},
+		{n: 11, expected: map[int]int{11: 1}},
+		{n: 12, expected: map[int]int{2: 2, 3: 1}},
+		{n: 13, expected: map[int]int{13: 1}},
+		{n: 14, expected: map[int]int{2: 1, 7: 1}},
+		{n: 15, expected: map[int]int{3: 1, 5: 1}},
+		{n: 16, expected: map[int]int{2: 4}},
+		{n: 17, expected: map[int]int{17: 1}},
+		{n: 18, expected: map[int]int{2: 1, 3: 2}},
+		{n: 19, expected: map[int]int{19: 1}},
+		{n: 20, expected: map[int]int{2: 2, 5: 1}},
+	}
+
+	for _, test := range tests {
+		test.received = Factor(test.n)
+		for k, expected := range test.expected {
+			received, ok := test.received[k]
+			if !ok || expected != received {
+				t.Fatalf("expected %d\nreceived %d", test.expected, test.received)
+			}
+		}
+	}
+}
+
 func TestFactorial(t *testing.T) {
 	tests := []struct {
 		n                int

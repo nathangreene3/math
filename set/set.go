@@ -71,8 +71,10 @@ func (S Set) Contains(v Comparable) (int, bool) {
 // Intersect of A and B returns a set containing values found in both A and B (AnB).
 func (S Set) Intersect(T Set) Set {
 	if len(S) < len(T) {
-		U := make(Set)
-		var k int
+		var (
+			U = make(Set)
+			k int
+		)
 		for _, v := range S {
 			if _, ok := T[k]; ok {
 				U[k] = v
@@ -98,8 +100,10 @@ func Intersection(S ...Set) Set {
 
 // Union of A and B returns a set containing values in either A or B (AuB). It is synonymous with joining or combining sets.
 func (S Set) Union(T Set) Set {
-	U := make(Set)
-	var k int
+	var (
+		U = make(Set)
+		k int
+	)
 	for _, v := range S {
 		U[k] = v
 		k++
@@ -127,8 +131,10 @@ func Union(S ...Set) Set {
 
 // LeftDisjoint returs a set containing values in A, but not B (A-B).
 func (S Set) LeftDisjoint(T Set) Set {
-	U := make(Set)
-	var k int
+	var (
+		U = make(Set)
+		k int
+	)
 	for _, v := range S {
 		if _, ok := T.Contains(v); !ok {
 			U[k] = v
@@ -146,8 +152,10 @@ func (S Set) RightDisjoint(T Set) Set {
 
 // Disjoint returns a set containing values in A and B, but not in both A and B ((AuB)-(AnB)).
 func (S Set) Disjoint(T Set) Set {
-	U := make(Set)
-	var k int
+	var (
+		U = make(Set)
+		k int
+	)
 	for _, v := range S {
 		if _, ok := T.Contains(v); !ok {
 			U[k] = v
