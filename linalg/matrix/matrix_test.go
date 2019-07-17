@@ -7,26 +7,19 @@ import (
 )
 
 func TestMultiply(t *testing.T) {
-	var (
-		c float64
-		f = func(a, b int) float64 {
-			if a == 0 && b == 0 {
-				c = 0
-			}
-			c++
-			return c
+	var c float64
+	f := func(a, b int) float64 {
+		if a == 0 && b == 0 {
+			c = 0
 		}
-		A   = New(2, 2, f)
-		B   = New(2, 3, f)
-		C   = New(3, 1, f)
-		Ans = Multiply(A, B, C)
-		Exp = New(2, 1, func(i, j int) float64 {
-			if i == 0 {
-				return 78
-			}
-			return 170
-		})
-	)
+		c++
+		return c
+	}
+	A := New(2, 2, f)
+	B := New(2, 3, f)
+	C := New(3, 1, f)
+	Ans := Multiply(A, B, C)
+	Exp := ColumnMatrix(vector.Vector{78, 170})
 	if !Ans.Equals(Exp) {
 		t.Fatalf("\nexpected %s\nreceived %s", Exp.String(), Ans.String())
 	}

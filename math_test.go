@@ -2,57 +2,22 @@ package math
 
 import "testing"
 
-func TestGCD(t *testing.T) {
+func TestChoose(t *testing.T) {
 	tests := []struct {
-		a        int
-		b        int
-		expected int
-		actual   int
+		n, k             int
+		expected, actual int
 	}{
-		{
-			a:        0,
-			b:        0,
-			expected: 0,
-		},
-		{
-			a:        0,
-			b:        1,
-			expected: 1,
-		},
-		{
-			a:        1,
-			b:        1,
-			expected: 1,
-		},
-		{
-			a:        1,
-			b:        2,
-			expected: 1,
-		},
-		{
-			a:        2,
-			b:        1,
-			expected: 1,
-		},
-		{
-			a:        2,
-			b:        4,
-			expected: 2,
-		},
-		{
-			a:        4,
-			b:        2,
-			expected: 2,
-		},
-		{
-			a:        5,
-			b:        10,
-			expected: 5,
-		},
+		{n: 5, k: 0},
+		{n: 5, k: 1},
+		{n: 5, k: 2},
+		{n: 5, k: 3},
+		{n: 5, k: 4},
+		{n: 5, k: 5},
 	}
 
 	for _, test := range tests {
-		test.actual = GCD(test.a, test.b)
+		test.expected = Factorial(test.n) / (Factorial(test.k) * Factorial(test.n-test.k))
+		test.actual = Choose(test.n, test.k)
 		if test.expected != test.actual {
 			t.Fatalf("\nexpected: %d\nreceived: %d\n", test.expected, test.actual)
 		}
@@ -99,33 +64,14 @@ func TestFactor(t *testing.T) {
 
 func TestFactorial(t *testing.T) {
 	tests := []struct {
-		n                int
-		expected, actual int
+		n, expected, actual int
 	}{
-		{
-			n:        0,
-			expected: 1,
-		},
-		{
-			n:        1,
-			expected: 1,
-		},
-		{
-			n:        2,
-			expected: 2,
-		},
-		{
-			n:        3,
-			expected: 6,
-		},
-		{
-			n:        4,
-			expected: 24,
-		},
-		{
-			n:        5,
-			expected: 120,
-		},
+		{n: 0, expected: 1},
+		{n: 1, expected: 1},
+		{n: 2, expected: 2},
+		{n: 3, expected: 6},
+		{n: 4, expected: 24},
+		{n: 5, expected: 120},
 	}
 
 	for _, test := range tests {
@@ -136,42 +82,52 @@ func TestFactorial(t *testing.T) {
 	}
 }
 
-func TestChoose(t *testing.T) {
+func TestGCD(t *testing.T) {
 	tests := []struct {
-		n, k             int
-		expected, actual int
+		a        int
+		b        int
+		expected int
+		actual   int
 	}{
-		{
-			n: 5,
-			k: 0,
-		},
-		{
-			n: 5,
-			k: 1,
-		},
-		{
-			n: 5,
-			k: 2,
-		},
-		{
-			n: 5,
-			k: 3,
-		},
-		{
-			n: 5,
-			k: 4,
-		},
-		{
-			n: 5,
-			k: 5,
-		},
+		{a: 0, b: 0, expected: 0},
+		{a: 0, b: 1, expected: 1},
+		{a: 1, b: 1, expected: 1},
+		{a: 1, b: 2, expected: 1},
+		{a: 2, b: 1, expected: 1},
+		{a: 2, b: 4, expected: 2},
+		{a: 4, b: 2, expected: 2},
+		{a: 5, b: 10, expected: 5},
 	}
 
 	for _, test := range tests {
-		test.expected = Factorial(test.n) / (Factorial(test.k) * Factorial(test.n-test.k))
-		test.actual = Choose(test.n, test.k)
+		test.actual = GCD(test.a, test.b)
 		if test.expected != test.actual {
 			t.Fatalf("\nexpected: %d\nreceived: %d\n", test.expected, test.actual)
+		}
+	}
+}
+
+func TestIsPrime(t *testing.T) {
+	tests := []struct {
+		a        int
+		exp, rec bool
+	}{
+		{a: 1, exp: false},
+		{a: 2, exp: true},
+		{a: 3, exp: true},
+		{a: 4, exp: false},
+		{a: 5, exp: true},
+		{a: 6, exp: false},
+		{a: 7, exp: true},
+		{a: 8, exp: false},
+		{a: 9, exp: false},
+		{a: 10, exp: false},
+	}
+
+	for _, test := range tests {
+		test.rec = IsPrime(test.a)
+		if test.exp != test.rec {
+			t.Fatalf("\nexpected: %t\nreceived: %t\n", test.exp, test.rec)
 		}
 	}
 }

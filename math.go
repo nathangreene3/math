@@ -26,7 +26,8 @@ func Factor(n int) map[int]int {
 
 // IsPrime indicates if n is prime.
 func IsPrime(n int) bool {
-	return len(Factor(n)) == 1
+	_, ok := Factor(n)[n]
+	return ok
 }
 
 // GCD returns the largest divisor of both a and b. If GCD(a,b) == 1,

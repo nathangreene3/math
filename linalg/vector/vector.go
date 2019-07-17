@@ -151,10 +151,8 @@ func Rotate2D(v Vector, a float64) Vector {
 // Rotate2D returns a vector rotated from v's position by an angle in
 // radians.
 func (v Vector) Rotate2D(a float64) {
-	var (
-		v0, v1   = v[0], v[1]
-		sin, cos = math.Sin(a), math.Cos(a)
-	)
+	v0, v1 := v[0], v[1]
+	sin, cos := math.Sin(a), math.Cos(a)
 	v[0], v[1] = v0*cos-v1*sin, v0*sin+v1*cos
 }
 

@@ -12,10 +12,8 @@ func (f Polynomial) degree() int {
 }
 
 func (f Polynomial) evaluate(x float64) float64 {
-	var (
-		y float64
-		p = 1.0
-	)
+	var y float64 // y = f(x)
+	p := 1.0      // p = x^i
 	for i := range f {
 		y += f[i] * p
 		p *= x
