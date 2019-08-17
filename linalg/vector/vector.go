@@ -22,6 +22,10 @@ type Vector []float64
 // Generator is a function defining the i-th entry of a vector.
 type Generator func(i int) float64
 
+// ------------------------------------------------------------------
+// VECTOR CONSTRUCTORS
+// ------------------------------------------------------------------
+
 // New generates a vector of dimension n with entries defined by a
 // generating function f.
 func New(n int, f Generator) Vector {
@@ -36,6 +40,30 @@ func New(n int, f Generator) Vector {
 // Zero returns the zero vector of n dimensions.
 func Zero(n int) Vector {
 	return make(Vector, n)
+}
+
+// ------------------------------------------------------------------
+// EXPORTED OPERATIONS ON VECTORS
+// ------------------------------------------------------------------
+
+// Approx returns true if v approximates w for a given precision on the range [0,1].
+func (v Vector) Approx(w Vector, prec float64) bool {
+	n := len(v)
+	if n != len(w) {
+		return false
+	}
+
+	if prec < 0 || 1 < prec {
+		panic("precision must be on range [0,1]")
+	}
+
+	for i := 0; i < n; i++ {
+		if prec < math.Abs(v[i]-w[i]) {
+			return false
+		}
+	}
+
+	return true
 }
 
 // Length returns |v|. This is NOT len(v).

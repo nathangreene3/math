@@ -27,7 +27,7 @@ func Factor(n int) map[int]int {
 // IsPrime indicates if n is prime.
 func IsPrime(n int) bool {
 	if n < 2 {
-		return false
+		return false // Prevents panic on non-positives and 1 isn't prime anyway
 	}
 
 	_, ok := Factor(n)[n]

@@ -2,7 +2,7 @@ package stats
 
 import "math"
 
-// Sum returns the Sum of a set of values.
+// Sum returns the sum of a list of values.
 func Sum(x []float64) float64 {
 	var s float64
 	for i := range x {
@@ -12,12 +12,12 @@ func Sum(x []float64) float64 {
 	return s
 }
 
-// Mean returns the Mean (or average) of a set of values.
+// Mean returns the Mean (or average) of a list of values.
 func Mean(x []float64) float64 {
 	return Sum(x) / float64(len(x))
 }
 
-// Var returns the Var of a set of values.
+// Var returns the Var of a list of values.
 func Var(x []float64) float64 {
 	m := Mean(x)
 	var v, t float64
@@ -29,7 +29,7 @@ func Var(x []float64) float64 {
 	return v / float64(len(x)-1)
 }
 
-// StDev returns the standard deviation of a set of values.
+// StDev returns the standard deviation of a list of values.
 func StDev(x []float64) float64 {
 	return math.Sqrt(Var(x))
 }
