@@ -1,5 +1,16 @@
 package math
 
+import gomath "math"
+
+// Approx returns true if |x-y| <= prec.
+func Approx(x, y, prec float64) bool {
+	if prec < 0 || 1 < prec {
+		panic("precision must be on range [0,1]")
+	}
+
+	return gomath.Abs(x-y) <= prec
+}
+
 // Factor returns a map of factors to the number of times they divide
 // an integer n. That is, for each key-value pair (k,v), k divides n
 // v times. Each key will be a prime divisor, which means k will be

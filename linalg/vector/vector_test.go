@@ -33,3 +33,25 @@ func TestIsMultipleOf(t *testing.T) {
 		}
 	}
 }
+
+func TestApprox(t *testing.T) {
+	var (
+		v = []Vector{
+			Vector{0},
+			Vector{1},
+		}
+		w = []Vector{
+			Vector{0.00000000000009383146683006760733897488065551829232273373104789015997084788978099822998046875},
+			Vector{0.99999999999990596410981424924102611839771270751953125},
+		}
+		prec = 0.010
+	)
+
+	if !v[0].Approx(w[0], prec) {
+		t.Fatalf("v[0] is not approximately w[0]:\nv = %s\nw[0] = %s", v[0], w[0])
+	}
+
+	if !v[1].Approx(w[1], prec) {
+		t.Fatalf("v[1] is not approximately w[1]:\nv = %s\nw[1] = %s", v[1], w[1])
+	}
+}

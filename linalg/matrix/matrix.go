@@ -134,10 +134,6 @@ func (A Matrix) Approx(B Matrix, prec float64) bool {
 		return false
 	}
 
-	if prec < 0 || 1 < prec {
-		panic("precision must be on range [0,1]")
-	}
-
 	for i := 0; i < ma; i++ {
 		if !A[i].Approx(B[i], prec) {
 			return false

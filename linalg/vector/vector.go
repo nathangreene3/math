@@ -2,8 +2,9 @@ package vector
 
 import (
 	"fmt"
-	"math"
+	gomath "math"
 
+	"github.com/nathangreene3/math"
 	"github.com/nathangreene3/math/stats"
 )
 
@@ -53,12 +54,8 @@ func (v Vector) Approx(w Vector, prec float64) bool {
 		return false
 	}
 
-	if prec < 0 || 1 < prec {
-		panic("precision must be on range [0,1]")
-	}
-
 	for i := 0; i < n; i++ {
-		if prec < math.Abs(v[i]-w[i]) {
+		if !math.Approx(v[i], w[i], prec) {
 			return false
 		}
 	}
@@ -68,7 +65,7 @@ func (v Vector) Approx(w Vector, prec float64) bool {
 
 // Length returns |v|. This is NOT len(v).
 func (v Vector) Length() float64 {
-	return math.Sqrt(v.Dot(v))
+	return gomath.Sqrt(v.Dot(v))
 }
 
 // Add returns v+w.
@@ -155,7 +152,7 @@ func (v Vector) Unit() Vector {
 
 // Angle returns the Angle between two vectors.
 func (v Vector) Angle(w Vector) float64 {
-	return math.Acos(v.Unit().Dot(w.Unit()))
+	return gomath.Acos(v.Unit().Dot(w.Unit()))
 }
 
 // Projection returns the projection of w onto v (proj_v(w)).
@@ -167,7 +164,7 @@ func (v Vector) Projection(w Vector) Vector {
 // Rotate2D returns a vector rotated from v's position by an angle a
 // in radians.
 func Rotate2D(v Vector, a float64) Vector {
-	sin, cos := math.Sin(a), math.Cos(a)
+	sin, cos := gomath.Sin(a), gomath.Cos(a)
 	return New(2, func(i int) float64 {
 		if i == 0 {
 			return v[0]*cos - v[1]*sin
@@ -180,7 +177,7 @@ func Rotate2D(v Vector, a float64) Vector {
 // radians.
 func (v Vector) Rotate2D(a float64) {
 	v0, v1 := v[0], v[1]
-	sin, cos := math.Sin(a), math.Cos(a)
+	sin, cos := gomath.Sin(a), gomath.Cos(a)
 	v[0], v[1] = v0*cos-v1*sin, v0*sin+v1*cos
 }
 
