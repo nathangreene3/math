@@ -143,6 +143,11 @@ func (A Matrix) Approx(B Matrix, prec float64) bool {
 	return true
 }
 
+// At returns A[i][j].
+func (A Matrix) At(i, j int) float64 {
+	return A[i][j]
+}
+
 // ColumnMatrix converts a vector v to an n-by-1 matrix.
 func ColumnMatrix(v vector.Vector) Matrix {
 	return New(len(v), 1, func(i, j int) float64 { return v[i] })
@@ -272,7 +277,7 @@ func Multiply(A ...Matrix) Matrix {
 	case 1:
 		return A[0]
 	case 2:
-		return A[0].multiply(A[1])
+		return A[0].Multiply(A[1])
 	}
 
 	var (
@@ -444,21 +449,22 @@ func Pow(A Matrix, p int) Matrix {
 		return Identity(m, n)
 	}
 
+	isEven := p&1 == 0
 	B := A.Copy()
 	for ; 1 < p; p >>= 1 {
 		B = Multiply(B, B)
 	}
 
-	if 0 < p {
-		return Multiply(B, A)
+	if isEven {
+		return B
 	}
 
-	return B
+	return Multiply(B, A)
 }
 
-// Solve Ax=b for x.
-func (A Matrix) Solve(b vector.Vector) vector.Vector {
-	B := A.Join(ColumnMatrix(b)).RemoveMultiples()
+// Solve Ax=y for x.
+func (A Matrix) Solve(y vector.Vector) vector.Vector {
+	B := A.Join(ColumnMatrix(y)).RemoveMultiples()
 	m, n := B.Dimensions()
 	for i := 1; i < m; i++ {
 		for j := i; j < m; j++ {
@@ -620,8 +626,8 @@ func (A Matrix) Vector() vector.Vector {
 // NON-EXPORTED OPERATIONS ON MATRICES
 // ------------------------------------------------------------------
 
-// multiply returns AB.
-func (A Matrix) multiply(B Matrix) Matrix {
+// Multiply returns AB.
+func (A Matrix) Multiply(B Matrix) Matrix {
 	ma, na := A.Dimensions()
 	mb, nb := B.Dimensions()
 	if na != mb {
@@ -687,7 +693,7 @@ func (A Matrix) multiply(B Matrix) Matrix {
 // a given order. Initiate by calling on i = 0 and j = n-1.
 func multiplyByOrder(s [][]int, i, j int, As ...Matrix) Matrix {
 	if i < j {
-		return multiplyByOrder(s, i, s[i][j], As...).multiply(multiplyByOrder(s, s[i][j]+1, j, As...))
+		return multiplyByOrder(s, i, s[i][j], As...).Multiply(multiplyByOrder(s, s[i][j]+1, j, As...))
 	}
 
 	return As[i]

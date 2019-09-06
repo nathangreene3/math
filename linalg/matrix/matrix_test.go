@@ -1,6 +1,7 @@
 package matrix
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/nathangreene3/math/linalg/vector"
@@ -32,7 +33,7 @@ func TestMultiply(t *testing.T) {
 	}
 	B = ColumnMatrix(vector.Vector{3, 9, 8, 2})
 	Exp = ColumnMatrix(vector.Vector{68, 74, 31})
-	Ans = A.multiply(B)
+	Ans = A.Multiply(B)
 	if !Exp.Equals(Ans) {
 		t.Fatalf("\nexpected %s\nreceived %s", Ans.String(), Exp.String())
 	}
@@ -87,4 +88,35 @@ func TestSolve(t *testing.T) {
 	if !x.Equal(y) {
 		t.Fatalf("expected %v, received %v", y, x)
 	}
+}
+
+func fibonacci(n int) int {
+	if n < 2 {
+		return 1
+	}
+
+	// [ 0 1 ]
+	// [ 1 1 ]
+	A := New(2, 2, func(i, j int) float64 {
+		return float64(i | j)
+	})
+
+	fmt.Printf("A^n = %v\n", Pow(A, n))
+	return int(Pow(A, n)[1][1])
+}
+
+func TestFibonacci(t *testing.T) {
+	var (
+		fibs = []int{1, 1, 2, 3, 5, 8, 13}
+		fib  int
+	)
+
+	for i, f := range fibs {
+		fib = fibonacci(i)
+		// if f != fib {
+		// t.Fatalf("expected %d\nreceived %d\n", f, fib)
+		fmt.Printf("%d %d %d\n", i, f, fib)
+		// }
+	}
+	t.Fatal()
 }
