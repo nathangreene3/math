@@ -1,6 +1,9 @@
 package math
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+)
 
 func TestChoose(t *testing.T) {
 	tests := []struct {
@@ -49,6 +52,13 @@ func TestFactor(t *testing.T) {
 		{n: 18, expected: map[int]int{2: 1, 3: 2}},
 		{n: 19, expected: map[int]int{19: 1}},
 		{n: 20, expected: map[int]int{2: 2, 5: 1}},
+
+		// Highly composite numbers
+		{n: 24, expected: map[int]int{2: 3, 3: 1}},
+		{n: 36, expected: map[int]int{2: 2, 3: 2}},
+		{n: 48, expected: map[int]int{2: 4, 3: 1}},
+		{n: 60, expected: map[int]int{2: 2, 3: 1, 5: 1}},
+		{n: 120, expected: map[int]int{2: 3, 3: 1, 5: 1}},
 	}
 
 	for _, test := range tests {
@@ -130,4 +140,58 @@ func TestIsPrime(t *testing.T) {
 			t.Fatalf("\nexpected: %t\nreceived: %t\n", test.exp, test.rec)
 		}
 	}
+}
+
+func TestToBase(t *testing.T) {
+	tests := []struct {
+		n, b     int
+		exp, rec []int
+	}{
+		{
+			n:   15,
+			b:   2,
+			exp: []int{1, 1, 1, 1},
+		},
+		{
+			n:   15,
+			b:   3,
+			exp: []int{0, 2, 1},
+		},
+		{
+			n:   15,
+			b:   10,
+			exp: []int{5, 1},
+		},
+		{
+			n:   42,
+			b:   2,
+			exp: []int{0, 1, 0, 1, 0, 1},
+		},
+	}
+
+	for _, test := range tests {
+		test.rec = Base(test.n, test.b)
+		if !equalInts(test.exp, test.rec) {
+			t.Fatalf("expected %v\nreceived %v\n", test.exp, test.rec)
+		}
+
+		fmt.Printf("len = %d, cap = %d\n", len(test.rec), cap(test.rec))
+	}
+
+	t.Fatalf("")
+}
+
+func equalInts(a, b []int) bool {
+	n := len(a)
+	if n != len(b) {
+		return false
+	}
+
+	for i := 0; i < n; i++ {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+
+	return true
 }

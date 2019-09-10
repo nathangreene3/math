@@ -1,10 +1,12 @@
 package matrix
 
 import (
-	"math"
+	"fmt"
+	gomath "math"
 	"sort"
 	"strings"
 
+	"github.com/nathangreene3/math"
 	"github.com/nathangreene3/math/linalg/vector"
 )
 
@@ -49,7 +51,16 @@ func Empty(m, n int) Matrix {
 // Identity returns the m-by-n identity matrix.
 func Identity(m, n int) Matrix {
 	// TODO: Determine if this should this panic when m,n = 0.
-	return New(m, n, func(i, j int) float64 { return float64((i + j) % 2) }) // Note: this generating function is called the Kronecker delta and is typically denoted as d(i,j)
+	// Note: this generating function is called the Kronecker delta
+	// and is typically denoted as d(i,j).
+	f := func(i, j int) float64 {
+
+		if i == j {
+			return 1
+		}
+		return 0
+	}
+	return New(m, n, f)
 }
 
 // ------------------------------------------------------------------
@@ -266,6 +277,69 @@ func (A Matrix) Join(B Matrix) Matrix {
 	return New(ma, na+nb, f)
 }
 
+// multiply returns AB.
+func (A Matrix) multiply(B Matrix) Matrix {
+	ma, na := A.Dimensions()
+	mb, nb := B.Dimensions()
+	if na != mb {
+		panic("A and B are of incompatible dimensions")
+	}
+
+	/*
+		f := func(i, j int) float64 {
+			var v float64
+			for k := 0; k < na; k++ {
+				v += A[i][k] * B[k][j]
+			}
+			return v
+		}
+		return New(ma, nb, f)
+	*/
+
+	// Winograd's algorithm
+	// Source: Analysis of Algorithms, 2nd Ed., by Jeffrey J.
+	// McConnell, pg 139-140
+	var (
+		d      = na / 2
+		rfacts = make([]float64, 0, ma)
+		cfacts = make([]float64, 0, nb)
+	)
+
+	for i := 0; i < ma; i++ {
+		rfacts = append(rfacts, A[i][0]*A[i][1])
+		for j := 1; j < d; j++ {
+			rfacts[i] += A[i][2*j] * A[i][2*j+1]
+		}
+	}
+
+	for i := 0; i < nb; i++ {
+		cfacts = append(cfacts, B[0][i]*B[1][i])
+		for j := 1; j < d; j++ {
+			cfacts[i] += B[2*j][i] * B[2*j+1][i]
+		}
+	}
+
+	C := Empty(ma, nb)
+	for i := 0; i < ma; i++ {
+		for j := 0; j < nb; j++ {
+			C[i][j] = -rfacts[i] - cfacts[j]
+			for k := 0; k < d; k++ {
+				C[i][j] += (A[i][2*k] + B[2*k+1][j]) * (A[i][2*k+1] + B[2*k][j])
+			}
+		}
+	}
+
+	if na%2 != 0 {
+		for i := 0; i < ma; i++ {
+			for j := 0; j < nb; j++ {
+				C[i][j] += A[i][na-1] * B[na-1][j]
+			}
+		}
+	}
+
+	return C
+}
+
 // Multiply several matrices.
 func Multiply(A ...Matrix) Matrix {
 	// Source: https://home.cse.ust.hk/~dekai/271/notes/L12/L12.pdf
@@ -277,7 +351,7 @@ func Multiply(A ...Matrix) Matrix {
 	case 1:
 		return A[0]
 	case 2:
-		return A[0].Multiply(A[1])
+		return A[0].multiply(A[1])
 	}
 
 	var (
@@ -297,7 +371,7 @@ func Multiply(A ...Matrix) Matrix {
 	for h := 1; h < n; h++ {
 		for i := 0; i < n-h; i++ {
 			j = i + h
-			cache[i][j] = math.MaxInt64
+			cache[i][j] = gomath.MaxInt64
 			for k := i; k < j; k++ {
 				cost = cache[i][k] + cache[k+1][j] + dims[i]*dims[k+1]*dims[j+1]
 				if cost < cache[i][j] {
@@ -347,6 +421,47 @@ func MultiplyRow(A Matrix, i int, a float64) Matrix {
 // MultiplyRow by a.
 func (A Matrix) MultiplyRow(i int, a float64) {
 	A[i].Multiply(a)
+}
+
+// Pow returns A^p, for square matrix A and 0 <= p.
+func Pow(A Matrix, p int) Matrix {
+	if p < 0 {
+		panic("power must be non-negative")
+	}
+
+	m, n := A.Dimensions()
+	if m != n {
+		panic("matrix must be square")
+	}
+
+	if p == 0 {
+		return Identity(m, n)
+	}
+
+	var (
+		B       = A.Copy()
+		powsOfB = map[int]Matrix{}
+		base    = math.Base(p, 2)
+	)
+
+	if p&1 == 1 {
+		powsOfB[1] = B
+	}
+
+	for q := 2; q <= p; q <<= 1 {
+		B = Multiply(B, B)
+		powsOfB[q] = B
+	}
+
+	Cs := make([]Matrix, 0, len(powsOfB))
+	for i, b := range base {
+		if 0 < b {
+			Cs = append(Cs, powsOfB[int(gomath.Pow(2, float64(i)))])
+		}
+	}
+
+	fmt.Printf("p = %d\nbase = %v\nCs = %v\n", p, base, Cs)
+	return Multiply(Cs...)
 }
 
 // ScalarDivide returns (1/a)A.
@@ -432,34 +547,6 @@ func SwapRows(A Matrix, i, j int) Matrix {
 // SwapRows swaps two rows.
 func (A Matrix) SwapRows(i, j int) {
 	A[i], A[j] = A[j], A[i]
-}
-
-// Pow returns A^p, for square matrix A and 0 <= p.
-func Pow(A Matrix, p int) Matrix {
-	if p < 0 {
-		panic("power must be non-negative")
-	}
-
-	m, n := A.Dimensions()
-	if m != n {
-		panic("matrix must be square")
-	}
-
-	if p == 0 {
-		return Identity(m, n)
-	}
-
-	isEven := p&1 == 0
-	B := A.Copy()
-	for ; 1 < p; p >>= 1 {
-		B = Multiply(B, B)
-	}
-
-	if isEven {
-		return B
-	}
-
-	return Multiply(B, A)
 }
 
 // Solve Ax=y for x.
@@ -626,74 +713,11 @@ func (A Matrix) Vector() vector.Vector {
 // NON-EXPORTED OPERATIONS ON MATRICES
 // ------------------------------------------------------------------
 
-// Multiply returns AB.
-func (A Matrix) Multiply(B Matrix) Matrix {
-	ma, na := A.Dimensions()
-	mb, nb := B.Dimensions()
-	if na != mb {
-		panic("A and B are of incompatible dimensions")
-	}
-
-	/*
-		f := func(i, j int) float64 {
-			var v float64
-			for k := 0; k < na; k++ {
-				v += A[i][k] * B[k][j]
-			}
-			return v
-		}
-		return New(ma, nb, f)
-	*/
-
-	// Winograd's algorithm
-	// Source: Analysis of Algorithms, 2nd Ed., by Jeffrey J.
-	// McConnell, pg 139-140
-	var (
-		d      = na / 2
-		rfacts = make([]float64, 0, ma)
-		cfacts = make([]float64, 0, nb)
-	)
-
-	for i := 0; i < ma; i++ {
-		rfacts = append(rfacts, A[i][0]*A[i][1])
-		for j := 1; j < d; j++ {
-			rfacts[i] += A[i][2*j] * A[i][2*j+1]
-		}
-	}
-
-	for i := 0; i < nb; i++ {
-		cfacts = append(cfacts, B[0][i]*B[1][i])
-		for j := 1; j < d; j++ {
-			cfacts[i] += B[2*j][i] * B[2*j+1][i]
-		}
-	}
-
-	C := Empty(ma, nb)
-	for i := 0; i < ma; i++ {
-		for j := 0; j < nb; j++ {
-			C[i][j] = -rfacts[i] - cfacts[j]
-			for k := 0; k < d; k++ {
-				C[i][j] += (A[i][2*k] + B[2*k+1][j]) * (A[i][2*k+1] + B[2*k][j])
-			}
-		}
-	}
-
-	if na%2 != 0 {
-		for i := 0; i < ma; i++ {
-			for j := 0; j < nb; j++ {
-				C[i][j] += A[i][na-1] * B[na-1][j]
-			}
-		}
-	}
-
-	return C
-}
-
 // multiplyByOrder returns the product of matrices by multiplying by
 // a given order. Initiate by calling on i = 0 and j = n-1.
 func multiplyByOrder(s [][]int, i, j int, As ...Matrix) Matrix {
 	if i < j {
-		return multiplyByOrder(s, i, s[i][j], As...).Multiply(multiplyByOrder(s, s[i][j]+1, j, As...))
+		return multiplyByOrder(s, i, s[i][j], As...).multiply(multiplyByOrder(s, s[i][j]+1, j, As...))
 	}
 
 	return As[i]

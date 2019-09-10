@@ -1,6 +1,8 @@
 package math
 
-import gomath "math"
+import (
+	gomath "math"
+)
 
 // Approx returns true if |x-y| <= prec.
 func Approx(x, y, prec float64) bool {
@@ -21,18 +23,30 @@ func Factor(n int) map[int]int {
 		panic("cannot factor non-positive integer")
 	}
 
-	f := make(map[int]int)
-	for ; n%2 == 0; n >>= 1 {
-		f[2]++
+	// Theorem: If p is prime greater than 3, then p = 6k-1 or 6k+1.
+	// 1. Determine how many times 2 and 3 divide n, if at all.
+	// 2. Check all integers 6k-1 and 6k+1 less than sqrt(n) to help eliminate multiples of 2 and 3. This speeds up factoring three times over.
+	factors := make(map[int]int)
+	for ; n&1 == 0; n >>= 1 {
+		factors[2]++
 	}
 
-	for k := 3; k <= n; k += 2 {
-		for ; n%k == 0; n /= k {
-			f[k]++
+	for ; n%3 == 0; n /= 3 {
+		factors[3]++
+	}
+
+	for d := 5; d <= n; d += 4 {
+		for ; n%d == 0; n /= d {
+			factors[d]++
+		}
+
+		d += 2
+		for ; n%d == 0; n /= d {
+			factors[d]++
 		}
 	}
 
-	return f
+	return factors
 }
 
 // IsPrime indicates if n is prime.
@@ -43,6 +57,31 @@ func IsPrime(n int) bool {
 
 	_, ok := Factor(n)[n]
 	return ok
+}
+
+// Base converts a number into its base representation.
+func Base(n, b int) []int {
+	if n < 0 {
+		panic("number must be non-negative")
+	}
+
+	if b < 2 {
+		panic("base must be greater than one")
+	}
+
+	var (
+		remainders = make([]int, 0, 64)
+		d          int
+	)
+
+	for ; 0 < n; n = d {
+		d = n / b
+		remainders = append(remainders, n-d*b)
+	}
+
+	cpy := make([]int, len(remainders))
+	copy(cpy, remainders)
+	return cpy
 }
 
 // GCD returns the largest divisor of both a and b. If GCD(a,b) == 1,
