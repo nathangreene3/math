@@ -1,7 +1,6 @@
 package math
 
 import (
-	"fmt"
 	"testing"
 )
 
@@ -142,7 +141,7 @@ func TestIsPrime(t *testing.T) {
 	}
 }
 
-func TestToBase(t *testing.T) {
+func TestBase(t *testing.T) {
 	tests := []struct {
 		n, b     int
 		exp, rec []int
@@ -174,11 +173,42 @@ func TestToBase(t *testing.T) {
 		if !equalInts(test.exp, test.rec) {
 			t.Fatalf("expected %v\nreceived %v\n", test.exp, test.rec)
 		}
+	}
+}
 
-		fmt.Printf("len = %d, cap = %d\n", len(test.rec), cap(test.rec))
+func TestBasePows(t *testing.T) {
+	tests := []struct {
+		n, b     int
+		exp, rec []int
+	}{
+		{
+			n:   15,
+			b:   2,
+			exp: []int{1, 2, 4, 8},
+		},
+		{
+			n:   15,
+			b:   3,
+			exp: []int{0 * 1, 2 * 3, 1 * 9},
+		},
+		{
+			n:   15,
+			b:   10,
+			exp: []int{5, 10},
+		},
+		{
+			n:   42,
+			b:   2,
+			exp: []int{0, 2, 0, 8, 0, 32},
+		},
 	}
 
-	t.Fatalf("")
+	for _, test := range tests {
+		test.rec = BasePows(test.n, test.b)
+		if !equalInts(test.exp, test.rec) {
+			t.Fatalf("expected %v\nreceived %v\n", test.exp, test.rec)
+		}
+	}
 }
 
 func equalInts(a, b []int) bool {

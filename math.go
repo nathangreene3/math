@@ -59,6 +59,15 @@ func IsPrime(n int) bool {
 	return ok
 }
 
+// fermatTest returns true if p is composite and false if otherwise.
+func fermatTest(p int) bool {
+	a := 2
+	for ; a < p && GCD(a, p) != 1; a++ {
+	}
+
+	return int(gomath.Pow(float64(a), float64(p-1)))%p == 1
+}
+
 // Base converts a number into its base representation.
 func Base(n, b int) []int {
 	if n < 0 {
@@ -82,6 +91,42 @@ func Base(n, b int) []int {
 	cpy := make([]int, len(remainders))
 	copy(cpy, remainders)
 	return cpy
+}
+
+// BasePows returns the powers of base b that sum to a number n.
+func BasePows(n, b int) []int {
+	if n < 0 {
+		panic("number must be non-negative")
+	}
+
+	if b < 2 {
+		panic("base must be greater than one")
+	}
+
+	var pows []int
+	for bp := 1; bp <= n; bp *= b {
+		pows = append(pows, bp)
+	}
+
+	var (
+		numPows = len(pows)
+		c       int // Number of times each power contributes to n
+	)
+
+	for i := numPows - 1; 0 <= i; i-- {
+		if n < pows[i] {
+			pows[i] = 0
+			continue
+		}
+
+		for c = 0; pows[i] <= n; c++ {
+			n -= pows[i]
+		}
+
+		pows[i] *= c
+	}
+
+	return pows
 }
 
 // GCD returns the largest divisor of both a and b. If GCD(a,b) == 1,
@@ -171,4 +216,67 @@ func Pascal(n int) [][]int {
 	}
 
 	return tri
+}
+
+func powInt(a, p int) int {
+	switch {
+	case a == 0:
+		if p == 0 {
+			panic("indeterminant form")
+		}
+		return 0
+	case p < 0:
+		panic("p must be non-negative")
+	case p == 0:
+		return 1
+	}
+
+	var (
+		base    = Base(p, 2)
+		b       = a
+		powsOfB = make(map[int]int)
+	)
+
+	if p&1 == 1 {
+		powsOfB[1] = b
+	}
+
+	for q := 2; q <= p; q <<= 1 {
+		b *= b
+		powsOfB[q] = b
+	}
+
+	c := 1
+	for i, b := range base {
+		if 0 < b {
+			c *= powsOfB[int(gomath.Pow(2, float64(i)))]
+		}
+	}
+
+	return c
+}
+
+func pow(a, p int) int {
+	switch {
+	case a == 0:
+		if p == 0 {
+			panic("indeterminant form")
+		}
+		return 0
+	case p < 0:
+		panic("p must not be negative")
+	case p == 0:
+		return 1
+	case p == 1:
+		return a
+	default:
+		y := pow(a, p/2)
+		y *= y
+		if p&1 == 1 {
+			y *= a
+		}
+	
+		return y
+	}
+
 }

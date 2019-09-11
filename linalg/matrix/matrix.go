@@ -440,8 +440,7 @@ func Pow(A Matrix, p int) Matrix {
 
 	var (
 		B       = A.Copy()
-		powsOfB = map[int]Matrix{}
-		base    = math.Base(p, 2)
+		powsOfB = make(map[int]Matrix)
 	)
 
 	if p&1 == 1 {
@@ -453,14 +452,18 @@ func Pow(A Matrix, p int) Matrix {
 		powsOfB[q] = B
 	}
 
-	Cs := make([]Matrix, 0, len(powsOfB))
-	for i, b := range base {
+	var (
+		Cs      = make([]Matrix, 0, len(powsOfB))
+		powsOf2 = math.BasePows(p, 2)
+	)
+
+	for i, b := range powsOf2 {
 		if 0 < b {
-			Cs = append(Cs, powsOfB[int(gomath.Pow(2, float64(i)))])
+			Cs = append(Cs, powsOfB[i])
 		}
 	}
 
-	fmt.Printf("p = %d\nbase = %v\nCs = %v\n", p, base, Cs)
+	fmt.Printf("p = %d\nbase = %v\nCs = %v\n", p, powsOf2, Cs)
 	return Multiply(Cs...)
 }
 
