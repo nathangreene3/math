@@ -60,12 +60,15 @@ func IsPrime(n int) bool {
 }
 
 // fermatTest returns true if p is composite and false if otherwise.
+// If p is prime, then p|a^(p-1) and true is returned. If p is not
+// prime, false is usually returned. This means that this test is a
+// composite test, but cannot guarentee p to be prime.
 func fermatTest(p int) bool {
 	a := 2
-	for ; a < p && GCD(a, p) != 1; a++ {
-	}
+	// for ; a < p && GCD(a, p) != 1; a++ {
+	// }
 
-	return int(gomath.Pow(float64(a), float64(p-1)))%p == 1
+	return powInt(a, p-1)%p == 1
 }
 
 // Base converts a number into its base representation.
@@ -88,9 +91,7 @@ func Base(n, b int) []int {
 		remainders = append(remainders, n-d*b)
 	}
 
-	cpy := make([]int, len(remainders))
-	copy(cpy, remainders)
-	return cpy
+	return remainders
 }
 
 // BasePows returns the powers of base b that sum to a number n.
@@ -108,12 +109,8 @@ func BasePows(n, b int) []int {
 		pows = append(pows, bp)
 	}
 
-	var (
-		numPows = len(pows)
-		c       int // Number of times each power contributes to n
-	)
-
-	for i := numPows - 1; 0 <= i; i-- {
+	var c int // Number of times each power contributes to n
+	for i := len(pows) - 1; 0 <= i; i-- {
 		if n < pows[i] {
 			pows[i] = 0
 			continue
@@ -218,6 +215,7 @@ func Pascal(n int) [][]int {
 	return tri
 }
 
+// powInt returns a^p for any integer a and non-zero integer p (exception: 0^0 is undefined and will panic).
 func powInt(a, p int) int {
 	switch {
 	case a == 0:
@@ -232,9 +230,9 @@ func powInt(a, p int) int {
 	}
 
 	var (
-		base    = Base(p, 2)
-		b       = a
-		powsOfB = make(map[int]int)
+		b        = a
+		basePows = BasePows(p, 2)
+		powsOfB  = make(map[int]int)
 	)
 
 	if p&1 == 1 {
@@ -247,36 +245,11 @@ func powInt(a, p int) int {
 	}
 
 	c := 1
-	for i, b := range base {
+	for _, b := range basePows {
 		if 0 < b {
-			c *= powsOfB[int(gomath.Pow(2, float64(i)))]
+			c *= powsOfB[b]
 		}
 	}
 
 	return c
-}
-
-func pow(a, p int) int {
-	switch {
-	case a == 0:
-		if p == 0 {
-			panic("indeterminant form")
-		}
-		return 0
-	case p < 0:
-		panic("p must not be negative")
-	case p == 0:
-		return 1
-	case p == 1:
-		return a
-	default:
-		y := pow(a, p/2)
-		y *= y
-		if p&1 == 1 {
-			y *= a
-		}
-	
-		return y
-	}
-
 }

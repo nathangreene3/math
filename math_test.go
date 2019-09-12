@@ -225,3 +225,83 @@ func equalInts(a, b []int) bool {
 
 	return true
 }
+
+func TestPowInt(t *testing.T) {
+	tests := []struct {
+		a, p     int
+		exp, rec int
+	}{
+		{
+			a:   2,
+			p:   0,
+			exp: 1,
+		},
+		{
+			a:   2,
+			p:   1,
+			exp: 2,
+		},
+		{
+			a:   2,
+			p:   2,
+			exp: 4,
+		},
+		{
+			a:   2,
+			p:   3,
+			exp: 8,
+		},
+		{
+			a:   2,
+			p:   4,
+			exp: 16,
+		},
+		{
+			a:   2,
+			p:   5,
+			exp: 32,
+		},
+		{
+			a:   2,
+			p:   6,
+			exp: 64,
+		},
+		{
+			a:   2,
+			p:   7,
+			exp: 128,
+		},
+		{
+			a:   3,
+			p:   0,
+			exp: 1,
+		},
+		{
+			a:   3,
+			p:   1,
+			exp: 3,
+		},
+		{
+			a:   3,
+			p:   2,
+			exp: 9,
+		},
+		{
+			a:   3,
+			p:   3,
+			exp: 27,
+		},
+		{
+			a:   3,
+			p:   4,
+			exp: 81,
+		},
+	}
+
+	for _, test := range tests {
+		test.rec = powInt(test.a, test.p)
+		if test.exp != test.rec {
+			t.Fatalf("expected %v\nreceived %v\n", test.exp, test.rec)
+		}
+	}
+}
