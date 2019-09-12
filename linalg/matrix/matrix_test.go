@@ -128,17 +128,18 @@ func TestPow(t *testing.T) {
 		exp, rec Matrix
 		n        = 43
 		As       = make([]Matrix, 0, n)
+		lenAs    int
 	)
 
-	for ; len(As) < n; As = append(As, A) {
-		if len(As) == 0 {
+	for ; lenAs < n; As = append(As, A) {
+		if lenAs = len(As); lenAs == 0 {
 			continue // Multiply() returns nil, Pow(A,0) returns I
 		}
 
 		exp = Multiply(As...)
-		rec = Pow(A, len(As))
+		rec = Pow(A, lenAs)
 		if !exp.Equals(rec) {
-			t.Fatalf("expected %v\nreceived %v\n", exp, rec)
+			t.Fatalf("expected %v\nreceived %v\ndifference %v\n", exp, rec, Subtract(exp, rec))
 		}
 	}
 }

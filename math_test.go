@@ -1,6 +1,7 @@
 package math
 
 import (
+	gomath "math"
 	"testing"
 )
 
@@ -182,6 +183,21 @@ func TestBasePows(t *testing.T) {
 		exp, rec []int
 	}{
 		{
+			n:   1,
+			b:   2,
+			exp: []int{1},
+		},
+		{
+			n:   2,
+			b:   2,
+			exp: []int{0, 2},
+		},
+		{
+			n:   3,
+			b:   2,
+			exp: []int{1, 2},
+		},
+		{
 			n:   15,
 			b:   2,
 			exp: []int{1, 2, 4, 8},
@@ -231,6 +247,16 @@ func TestPowInt(t *testing.T) {
 		a, p     int
 		exp, rec int
 	}{
+		{
+			a:   0,
+			p:   1,
+			exp: 0,
+		},
+		{
+			a:   1,
+			p:   0,
+			exp: 1,
+		},
 		{
 			a:   2,
 			p:   0,
@@ -303,5 +329,38 @@ func TestPowInt(t *testing.T) {
 		if test.exp != test.rec {
 			t.Fatalf("expected %v\nreceived %v\n", test.exp, test.rec)
 		}
+	}
+}
+
+func BenchmarkPowInt(b *testing.B) {
+	a, p := 2, 64
+	for i := 0; i < b.N; i++ {
+		_ = powInt(a, p)
+	}
+}
+
+func BenchmarkGomathPow(b *testing.B) {
+	a, p := 2, 64
+	for i := 0; i < b.N; i++ {
+		_ = int(gomath.Pow(float64(a), float64(p)))
+	}
+}
+
+func TestNegShift(t *testing.T) {
+	exp, rec := -2/2, -2>>1
+	if exp != rec {
+		t.Fatalf("expected %d\nreceived %d\n", exp, rec)
+	}
+}
+
+func BenchmarkDivide(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		_ = 2 / 2
+	}
+}
+
+func BenchmarkShift(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		_ = 2 >> 1
 	}
 }

@@ -1,7 +1,6 @@
 package matrix
 
 import (
-	"fmt"
 	gomath "math"
 	"sort"
 	"strings"
@@ -452,18 +451,13 @@ func Pow(A Matrix, p int) Matrix {
 		powsOfB[q] = B
 	}
 
-	var (
-		Cs      = make([]Matrix, 0, len(powsOfB))
-		powsOf2 = math.BasePows(p, 2)
-	)
-
-	for i, b := range powsOf2 {
+	Cs := make([]Matrix, 0, len(powsOfB))
+	for _, b := range math.BasePows(p, 2) {
 		if 0 < b {
-			Cs = append(Cs, powsOfB[i])
+			Cs = append(Cs, powsOfB[b])
 		}
 	}
 
-	fmt.Printf("p = %d\nbase = %v\nCs = %v\n", p, powsOf2, Cs)
 	return Multiply(Cs...)
 }
 

@@ -216,6 +216,7 @@ func Pascal(n int) [][]int {
 }
 
 // powInt returns a^p for any integer a and non-zero integer p (exception: 0^0 is undefined and will panic).
+// This is still slower than int(gomath.Pow(float64(a),float64(p))).
 func powInt(a, p int) int {
 	switch {
 	case a == 0:
@@ -229,27 +230,22 @@ func powInt(a, p int) int {
 		return 1
 	}
 
-	var (
-		b        = a
-		basePows = BasePows(p, 2)
-		powsOfB  = make(map[int]int)
-	)
-
+	powsOfA := make(map[int]int)
 	if p&1 == 1 {
-		powsOfB[1] = b
+		powsOfA[1] = a
 	}
 
 	for q := 2; q <= p; q <<= 1 {
-		b *= b
-		powsOfB[q] = b
+		a *= a
+		powsOfA[q] = a
 	}
 
-	c := 1
-	for _, b := range basePows {
+	y := 1
+	for _, b := range BasePows(p, 2) {
 		if 0 < b {
-			c *= powsOfB[b]
+			y *= powsOfA[b]
 		}
 	}
 
-	return c
+	return y
 }
