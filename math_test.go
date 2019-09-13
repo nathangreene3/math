@@ -325,7 +325,7 @@ func TestPowInt(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		test.rec = powInt(test.a, test.p)
+		test.rec = PowInt(test.a, test.p)
 		if test.exp != test.rec {
 			t.Fatalf("expected %v\nreceived %v\n", test.exp, test.rec)
 		}
@@ -335,7 +335,7 @@ func TestPowInt(t *testing.T) {
 func BenchmarkPowInt(b *testing.B) {
 	a, p := 2, 64
 	for i := 0; i < b.N; i++ {
-		_ = powInt(a, p)
+		_ = PowInt(a, p)
 	}
 }
 

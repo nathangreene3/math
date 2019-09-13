@@ -140,7 +140,7 @@ func TestPow(t *testing.T) {
 		exp = Multiply(As...)
 		rec = Pow(A, lenAs)
 		if !exp.Equals(rec) {
-			t.Fatalf("expected %v\nreceived %v\ndifference %v\n", exp, rec, Subtract(exp, rec))
+			t.Fatalf("expected %v\nreceived %v\ndifference %v\nlenAs %d\n", exp, rec, Subtract(exp, rec), lenAs)
 		}
 	}
 }

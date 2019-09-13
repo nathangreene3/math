@@ -76,21 +76,21 @@ func (a Permutation) Generate() set.Set {
 	return S
 }
 
-// Pow returns a^n.
-func (a Permutation) Pow(n int) Permutation {
+// Pow returns a^p.
+func (a Permutation) Pow(p int) Permutation {
 	if !a.IsPermutation() {
 		panic("not a permutation")
 	}
 
-	if n == -1 {
+	if p == -1 {
 		// Todo: find inverse
 	}
 
 	// Yacas' method
 	b := Identity(len(a))
 	c := a.Copy()
-	for ; 0 < n; n /= 2 {
-		if n%2 == 0 {
+	for ; 0 < p; p >>= 1 {
+		if p&1 == 1 {
 			b = b.Multiply(c)
 		}
 

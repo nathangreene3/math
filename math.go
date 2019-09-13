@@ -68,7 +68,7 @@ func fermatTest(p int) bool {
 	// for ; a < p && GCD(a, p) != 1; a++ {
 	// }
 
-	return powInt(a, p-1)%p == 1
+	return PowInt(a, p-1)%p == 1
 }
 
 // Base converts a number into its base representation.
@@ -215,9 +215,9 @@ func Pascal(n int) [][]int {
 	return tri
 }
 
-// powInt returns a^p for any integer a and non-zero integer p (exception: 0^0 is undefined and will panic).
+// PowInt returns a^p for any integer a and non-zero integer p (exception: 0^0 is undefined and will panic).
 // This is still slower than int(gomath.Pow(float64(a),float64(p))).
-func powInt(a, p int) int {
+func PowInt(a, p int) int {
 	switch {
 	case a == 0:
 		if p == 0 {
@@ -230,21 +230,14 @@ func powInt(a, p int) int {
 		return 1
 	}
 
-	powsOfA := make(map[int]int)
-	if p&1 == 1 {
-		powsOfA[1] = a
-	}
-
-	for q := 2; q <= p; q <<= 1 {
-		a *= a
-		powsOfA[q] = a
-	}
-
+	// Yacca's method
 	y := 1
-	for _, b := range BasePows(p, 2) {
-		if 0 < b {
-			y *= powsOfA[b]
+	for ; 0 < p; p >>= 1 {
+		if p&1 == 1 {
+			y *= a
 		}
+
+		a *= a
 	}
 
 	return y

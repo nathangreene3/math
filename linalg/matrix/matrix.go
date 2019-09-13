@@ -5,7 +5,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/nathangreene3/math"
 	"github.com/nathangreene3/math/linalg/vector"
 )
 
@@ -63,7 +62,9 @@ func Identity(m, n int) Matrix {
 }
 
 // ------------------------------------------------------------------
-// EXPORTED OPERATIONS ON MATRICES
+// OPERATIONS ON MATRICES
+// ------------------------------------------------------------------
+// In general, A.F(B) updates A and F(A,B) returns a new matrix.
 // ------------------------------------------------------------------
 
 // Add returns the sum of two matrices.
@@ -386,6 +387,16 @@ func Multiply(As ...Matrix) Matrix {
 	return multiplyByOrder(order, 0, n-1, As...)
 }
 
+// multiplyByOrder returns the product of matrices by multiplying by
+// a given order. Initiate by calling on i = 0 and j = n-1.
+func multiplyByOrder(s [][]int, i, j int, As ...Matrix) Matrix {
+	if i < j {
+		return multiplyByOrder(s, i, s[i][j], As...).multiply(multiplyByOrder(s, s[i][j]+1, j, As...))
+	}
+
+	return As[i]
+}
+
 // MultiplyColumn returns A with the ith col multiplied by a.
 func MultiplyColumn(A Matrix, i int, a float64) Matrix {
 	m, n := A.Dimensions()
@@ -426,7 +437,7 @@ func (A Matrix) MultiplyRow(i int, a float64) {
 
 // Pow returns A^p, for square matrix A and 0 <= p.
 func Pow(A Matrix, p int) Matrix {
-	if p < 0 {
+	if p < -1 {
 		panic("power must be non-negative")
 	}
 
@@ -435,32 +446,27 @@ func Pow(A Matrix, p int) Matrix {
 		panic("matrix must be square")
 	}
 
-	if p == 0 {
+	switch p {
+	case -1:
+		return A.Inverse()
+	case 0:
 		return Identity(m, n)
+	case 1:
+		return A.Copy()
 	}
 
-	var (
-		B       = A.Copy()
-		powsOfB = make(map[int]Matrix)
-	)
-
-	if p&1 == 1 {
-		powsOfB[1] = B
-	}
-
-	for q := 2; q <= p; q <<= 1 {
-		B = Multiply(B, B)
-		powsOfB[q] = B
-	}
-
-	Cs := make([]Matrix, 0, len(powsOfB))
-	for _, b := range math.BasePows(p, 2) {
-		if 0 < b {
-			Cs = append(Cs, powsOfB[b])
+	// Yacca's method
+	B := Identity(m, n)
+	C := A.Copy()
+	for ; 0 < p; p >>= 1 {
+		if p&1 == 1 {
+			B = Multiply(B, C)
 		}
+
+		C = Multiply(C, C)
 	}
 
-	return Multiply(Cs...)
+	return B
 }
 
 // ScalarDivide returns (1/a)A.
@@ -672,7 +678,7 @@ func (A Matrix) Sort() {
 	sort.SliceStable(A, func(i, j int) bool { return 0 < A[i].CompareTo(A[j]) })
 }
 
-// String returns a formatted string representation of a matrix.
+// String returns a formatted string representation of a matrix. TODO: Determine if this is needed.
 func (A Matrix) String() string {
 	sb := strings.Builder{}
 	m, n := A.Dimensions()
@@ -686,6 +692,12 @@ func (A Matrix) String() string {
 
 	sb.WriteByte(']')
 	return sb.String()
+}
+
+// tildeA TODO: Rename this.
+func (A Matrix) tildeA(i, j int) Matrix {
+	// LinAlg pg 197
+	return A.RemoveRow(i).RemoveColumn(j)
 }
 
 // Transpose returns the transpose of a matrix.
@@ -706,24 +718,4 @@ func (A Matrix) Vector() vector.Vector {
 	}
 
 	panic("invalid dimensions")
-}
-
-// ------------------------------------------------------------------
-// NON-EXPORTED OPERATIONS ON MATRICES
-// ------------------------------------------------------------------
-
-// multiplyByOrder returns the product of matrices by multiplying by
-// a given order. Initiate by calling on i = 0 and j = n-1.
-func multiplyByOrder(s [][]int, i, j int, As ...Matrix) Matrix {
-	if i < j {
-		return multiplyByOrder(s, i, s[i][j], As...).multiply(multiplyByOrder(s, s[i][j]+1, j, As...))
-	}
-
-	return As[i]
-}
-
-// tildeA TODO: Rename this.
-func (A Matrix) tildeA(i, j int) Matrix {
-	// LinAlg pg 197
-	return A.RemoveRow(i).RemoveColumn(j)
 }

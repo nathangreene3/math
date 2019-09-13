@@ -161,18 +161,6 @@ func (v Vector) Projection(w Vector) Vector {
 	return Multiply(w.Dot(v)/(r*r), v)
 }
 
-// Rotate2D returns a vector rotated from v's position by an angle a
-// in radians.
-func Rotate2D(v Vector, a float64) Vector {
-	sin, cos := gomath.Sin(a), gomath.Cos(a)
-	return New(2, func(i int) float64 {
-		if i == 0 {
-			return v[0]*cos - v[1]*sin
-		}
-		return v[0]*sin + v[1]*cos
-	})
-}
-
 // Rotate2D returns a vector rotated from v's position by an angle in
 // radians.
 func (v Vector) Rotate2D(a float64) {
