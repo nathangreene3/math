@@ -9,19 +9,22 @@ import (
 )
 
 func TestMultiply(t *testing.T) {
-	var c float64
-	f := func(a, b int) float64 {
-		if a == 0 && b == 0 {
-			c = 0
+	var (
+		c float64
+		f = func(a, b int) float64 {
+			if a+b == 0 {
+				c = 0
+			}
+			c++
+			return c
 		}
-		c++
-		return c
-	}
-	A := New(2, 2, f)
-	B := New(2, 3, f)
-	C := New(3, 1, f)
-	Ans := Multiply(A, B, C)
-	Exp := ColumnMatrix(vector.Vector{78, 170})
+		A   = New(2, 2, f)
+		B   = New(2, 3, f)
+		C   = New(3, 1, f)
+		Ans = Multiply(A, B, C)
+		Exp = ColumnMatrix(vector.Vector{78, 170})
+	)
+
 	if !Ans.Equals(Exp) {
 		t.Fatalf("\nexpected %s\nreceived %s", Exp.String(), Ans.String())
 	}
@@ -98,9 +101,7 @@ func fibonacci(n int) int {
 
 	// [ 0 1 ]
 	// [ 1 1 ]
-	A := New(2, 2, func(i, j int) float64 {
-		return float64(i | j)
-	})
+	A := New(2, 2, func(i, j int) float64 { return float64(i | j) })
 
 	fmt.Printf("A^%d = %v\n", n, Pow(A, n))
 	return int(Pow(A, n)[1][1])
@@ -108,7 +109,7 @@ func fibonacci(n int) int {
 
 func TestFibonacci(t *testing.T) {
 	var (
-		n         = 42
+		n         = 100
 		linAlgFib int
 		mathFib   int
 	)

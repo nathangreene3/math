@@ -276,7 +276,7 @@ func (A Matrix) Join(B Matrix) Matrix {
 	return New(ma, na+nb, f)
 }
 
-// multiply returns AB.
+// multiply returns AB. TODO: Correct the implementation of Winograd's algorithm.
 func (A Matrix) multiply(B Matrix) Matrix {
 	ma, na := A.Dimensions()
 	mb, nb := B.Dimensions()
@@ -284,73 +284,75 @@ func (A Matrix) multiply(B Matrix) Matrix {
 		panic("A and B are of incompatible dimensions")
 	}
 
+	f := func(i, j int) float64 {
+		var v float64
+		for k := 0; k < na; k++ {
+			v += A[i][k] * B[k][j]
+		}
+
+		return v
+	}
+
+	return New(ma, nb, f)
+
 	/*
-		f := func(i, j int) float64 {
-			var v float64
-			for k := 0; k < na; k++ {
-				v += A[i][k] * B[k][j]
-			}
-			return v
-		}
-		return New(ma, nb, f)
-	*/
+		// Winograd's algorithm
+		// Source: Analysis of Algorithms, 2nd Ed., by Jeffrey J.
+		// McConnell, pg 139-140
+		var (
+			d      = na >> 1
+			rfacts = make([]float64, 0, ma)
+			cfacts = make([]float64, 0, nb)
+		)
 
-	// Winograd's algorithm
-	// Source: Analysis of Algorithms, 2nd Ed., by Jeffrey J.
-	// McConnell, pg 139-140
-	var (
-		d      = na / 2
-		rfacts = make([]float64, 0, ma)
-		cfacts = make([]float64, 0, nb)
-	)
-
-	for i := 0; i < ma; i++ {
-		rfacts = append(rfacts, A[i][0]*A[i][1])
-		for j := 1; j < d; j++ {
-			rfacts[i] += A[i][2*j] * A[i][2*j+1]
-		}
-	}
-
-	for i := 0; i < nb; i++ {
-		cfacts = append(cfacts, B[0][i]*B[1][i])
-		for j := 1; j < d; j++ {
-			cfacts[i] += B[2*j][i] * B[2*j+1][i]
-		}
-	}
-
-	C := Empty(ma, nb)
-	for i := 0; i < ma; i++ {
-		for j := 0; j < nb; j++ {
-			C[i][j] = -rfacts[i] - cfacts[j]
-			for k := 0; k < d; k++ {
-				C[i][j] += (A[i][2*k] + B[2*k+1][j]) * (A[i][2*k+1] + B[2*k][j])
+		for i := 0; i < ma; i++ {
+			rfacts = append(rfacts, A[i][0]*A[i][1])
+			for j := 1; j < d; j++ {
+				rfacts[i] += A[i][j<<1] * A[i][j<<1+1]
 			}
 		}
-	}
 
-	if na%2 != 0 {
+		for i := 0; i < nb; i++ {
+			cfacts = append(cfacts, B[0][i]*B[1][i])
+			for j := 1; j < d; j++ {
+				cfacts[i] += B[j<<1][i] * B[j<<1+1][i]
+			}
+		}
+
+		C := Empty(ma, nb)
 		for i := 0; i < ma; i++ {
 			for j := 0; j < nb; j++ {
-				C[i][j] += A[i][na-1] * B[na-1][j]
+				C[i][j] = -rfacts[i] - cfacts[j]
+				for k := 0; k < d; k++ {
+					C[i][j] += (A[i][k<<1] + B[k<<1+1][j]) * (A[i][k<<1+1] + B[2*k][j])
+				}
 			}
 		}
-	}
 
-	return C
+		if na%1 == 1 {
+			for i := 0; i < ma; i++ {
+				for j := 0; j < nb; j++ {
+					C[i][j] += A[i][na-1] * B[na-1][j]
+				}
+			}
+		}
+
+		return C
+	*/
 }
 
 // Multiply several matrices.
-func Multiply(A ...Matrix) Matrix {
+func Multiply(As ...Matrix) Matrix {
 	// Source: https://home.cse.ust.hk/~dekai/271/notes/L12/L12.pdf
 
-	n := len(A)
+	n := len(As)
 	switch n {
 	case 0:
 		return nil
 	case 1:
-		return A[0]
+		return As[0]
 	case 2:
-		return A[0].multiply(A[1])
+		return As[0].multiply(As[1])
 	}
 
 	var (
@@ -361,12 +363,12 @@ func Multiply(A ...Matrix) Matrix {
 	)
 
 	for i := 0; i < n; i++ {
-		dims = append(dims, len(A[i]))
+		dims = append(dims, len(As[i]))
 		cache = append(cache, make([]int, n))
 		order = append(order, make([]int, n))
 	}
 
-	dims = append(dims, len(A[n-1][0]))
+	dims = append(dims, len(As[n-1][0]))
 	for h := 1; h < n; h++ {
 		for i := 0; i < n-h; i++ {
 			j = i + h
@@ -381,7 +383,7 @@ func Multiply(A ...Matrix) Matrix {
 		}
 	}
 
-	return multiplyByOrder(order, 0, n-1, A...)
+	return multiplyByOrder(order, 0, n-1, As...)
 }
 
 // MultiplyColumn returns A with the ith col multiplied by a.
