@@ -127,7 +127,7 @@ func TestPow(t *testing.T) {
 	var (
 		A        = New(2, 2, func(i, j int) float64 { return float64(i | j) })
 		exp, rec Matrix
-		n        = 43
+		n        = 100
 		As       = make([]Matrix, 0, n)
 		lenAs    int
 	)
@@ -140,7 +140,7 @@ func TestPow(t *testing.T) {
 		exp = Multiply(As...)
 		rec = Pow(A, lenAs)
 		if !exp.Equals(rec) {
-			t.Fatalf("expected %v\nreceived %v\ndifference %v\nlenAs %d\n", exp, rec, Subtract(exp, rec), lenAs)
+			t.Fatalf("\nexpected %v\nreceived %v\ndifference %v\nlenAs %d\n", exp, rec, Subtract(exp, rec), lenAs)
 		}
 	}
 }

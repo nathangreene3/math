@@ -446,13 +446,8 @@ func Pow(A Matrix, p int) Matrix {
 		panic("matrix must be square")
 	}
 
-	switch p {
-	case -1:
+	if p == -1 {
 		return A.Inverse()
-	case 0:
-		return Identity(m, n)
-	case 1:
-		return A.Copy()
 	}
 
 	// Yacca's method
