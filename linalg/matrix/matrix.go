@@ -32,10 +32,7 @@ type Generator func(i, j int) float64
 func New(m, n int, f Generator) Matrix {
 	A := make(Matrix, 0, m)
 	for i := 0; i < m; i++ {
-		A = append(A, make(vector.Vector, 0, n))
-		for j := 0; j < n; j++ {
-			A[i] = append(A[i], f(i, j))
-		}
+		A = append(A, vector.New(n, func(j int) float64 { return f(i, j) }))
 	}
 
 	return A

@@ -144,3 +144,27 @@ func TestPow(t *testing.T) {
 		}
 	}
 }
+
+func TestPow1(t *testing.T) {
+	var (
+		A      = New(2, 2, func(i, j int) float64 { return float64(i | j) })
+		Apow78 = Pow(A, 78)
+		exp    = Multiply(Apow78, A)
+		rec    = Pow(A, 79)
+	)
+
+	if !exp.Equals(rec) {
+		t.Fatalf("\nexpected %v x %v = %v\nreceived %v x %v = %v\n", Apow78, A, exp, Apow78, A, rec)
+	}
+}
+
+func TestSumFibs(t *testing.T) {
+	var (
+		F77, F78, F79 = float64(math.Fibonacci(77)), float64(math.Fibonacci(78)), float64(math.Fibonacci(79))
+		sum           = F77 + F78
+	)
+
+	// if F79 != sum {
+	t.Fatalf("\nexpected %0.0f + %0.0f = %0.0f\nreceived %0.0f\n", F77, F78, F79, sum)
+	// }
+}
