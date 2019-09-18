@@ -22,26 +22,6 @@ func New(S ...Comparable) Set {
 	return B
 }
 
-// Insert a value into a set. Returns the key. Duplicate values will not be inserted, but the current key of the existing value will be returned.
-func (S Set) Insert(v Comparable) int {
-	k, ok := S.Contains(v)
-	if !ok {
-		S[k] = v
-	}
-
-	return k
-}
-
-// Remove and return a value from a set. Returns nil if value not found.
-func (S Set) Remove(k int) Comparable {
-	if v, ok := S[k]; ok {
-		delete(S, k)
-		return v
-	}
-
-	return nil
-}
-
 // Contains returns the key of a value and true if it is found. If not, then the next available key and false is returned.
 func (S Set) Contains(v Comparable) (int, bool) {
 	n := len(S)
@@ -66,6 +46,37 @@ func (S Set) Contains(v Comparable) (int, bool) {
 	}
 
 	return n, false
+}
+
+// Disjoint returns a set containing values in A and B, but not in both A and B ((AuB)-(AnB)).
+func (S Set) Disjoint(T Set) Set {
+	U := make(Set)
+	var k int
+	for _, v := range S {
+		if _, ok := T.Contains(v); !ok {
+			U[k] = v
+			k++
+		}
+	}
+
+	for _, v := range T {
+		if _, ok := S.Contains(v); !ok {
+			U[k] = v
+			k++
+		}
+	}
+
+	return U
+}
+
+// Insert a value into a set. Returns the key. Duplicate values will not be inserted, but the current key of the existing value will be returned.
+func (S Set) Insert(v Comparable) int {
+	k, ok := S.Contains(v)
+	if !ok {
+		S[k] = v
+	}
+
+	return k
 }
 
 // Intersect of A and B returns a set containing values found in both A and B (AnB).
@@ -96,6 +107,35 @@ func Intersection(S ...Set) Set {
 	return T
 }
 
+// LeftDisjoint returs a set containing values in A, but not B (A-B).
+func (S Set) LeftDisjoint(T Set) Set {
+	U := make(Set)
+	var k int
+	for _, v := range S {
+		if _, ok := T.Contains(v); !ok {
+			U[k] = v
+			k++
+		}
+	}
+
+	return U
+}
+
+// Remove and return a value from a set. Returns nil if value not found.
+func (S Set) Remove(k int) Comparable {
+	if v, ok := S[k]; ok {
+		delete(S, k)
+		return v
+	}
+
+	return nil
+}
+
+// RightDisjoint returns a set containing values in B, but not A (B-A).
+func (S Set) RightDisjoint(T Set) Set {
+	return T.LeftDisjoint(S)
+}
+
 // Union of A and B returns a set containing values in either A or B (AuB). It is synonymous with joining or combining sets.
 func (S Set) Union(T Set) Set {
 	U := make(Set)
@@ -123,46 +163,6 @@ func Union(S ...Set) Set {
 	}
 
 	return T
-}
-
-// LeftDisjoint returs a set containing values in A, but not B (A-B).
-func (S Set) LeftDisjoint(T Set) Set {
-	U := make(Set)
-	var k int
-	for _, v := range S {
-		if _, ok := T.Contains(v); !ok {
-			U[k] = v
-			k++
-		}
-	}
-
-	return U
-}
-
-// RightDisjoint returns a set containing values in B, but not A (B-A).
-func (S Set) RightDisjoint(T Set) Set {
-	return T.LeftDisjoint(S)
-}
-
-// Disjoint returns a set containing values in A and B, but not in both A and B ((AuB)-(AnB)).
-func (S Set) Disjoint(T Set) Set {
-	U := make(Set)
-	var k int
-	for _, v := range S {
-		if _, ok := T.Contains(v); !ok {
-			U[k] = v
-			k++
-		}
-	}
-
-	for _, v := range T {
-		if _, ok := S.Contains(v); !ok {
-			U[k] = v
-			k++
-		}
-	}
-
-	return U
 }
 
 // Cardinality returns the number of values in a set.

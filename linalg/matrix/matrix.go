@@ -46,15 +46,16 @@ func Empty(m, n int) Matrix {
 // Identity returns the m-by-n identity matrix.
 func Identity(m, n int) Matrix {
 	// TODO: Determine if this should this panic when m,n = 0.
+
 	// Note: this generating function is called the Kronecker delta
 	// and is typically denoted as d(i,j).
 	f := func(i, j int) float64 {
-
 		if i == j {
 			return 1
 		}
 		return 0
 	}
+
 	return New(m, n, f)
 }
 
@@ -221,18 +222,21 @@ func (A Matrix) Determinant() float64 {
 		return A[0][0]*A[1][1] - A[0][1]*A[1][0]
 	case 3:
 		return A[0][0]*(A[1][2]*A[2][2]-A[1][2]*A[2][1]) - A[0][1]*(A[1][0]*A[2][2]-A[1][2]*A[2][0]) + A[0][2]*(A[1][0]*A[2][1]-A[1][1]*A[2][0])
-	default:
-		// This is probably terrible...
-		B := A.RemoveRow(0)
-		a := 1.0      // Indicates sign
-		var d float64 // Determinant to return
-		for i := 0; 0 < m; i++ {
-			d += a * A[0][i] * B.RemoveColumn(i).Determinant()
-			a *= -1
-		}
-
-		return d
 	}
+
+	// This is probably terrible...
+	var (
+		B   = A.RemoveRow(0)
+		sgn = 1.0
+		det float64
+	)
+
+	for i := 0; 0 < m; i++ {
+		det += sgn * A[0][i] * B.RemoveColumn(i).Determinant()
+		sgn *= -1
+	}
+
+	return det
 }
 
 // Dimensions returns the Dimensions (number of rows, number of
@@ -434,16 +438,13 @@ func (A Matrix) MultiplyRow(i int, a float64) {
 
 // Pow returns A^p, for square matrix A and 0 <= p.
 func Pow(A Matrix, p int) Matrix {
-	if p < -1 {
-		panic("power must be non-negative")
-	}
-
 	m, n := A.Dimensions()
-	if m != n {
+	switch {
+	case m != n:
 		panic("matrix must be square")
-	}
-
-	if p == -1 {
+	case p < -1:
+		panic("power must be non-negative, except for -1")
+	case p == -1:
 		return A.Inverse()
 	}
 
@@ -524,6 +525,30 @@ func (A Matrix) SubtractRowFromRow(i, j int) {
 	A[i].Subtract(A[j])
 }
 
+// SwapCols returns A with columns i and j swapped.
+func SwapCols(A Matrix, i, j int) Matrix {
+	m, n := A.Dimensions()
+	f := func(a, b int) float64 {
+		switch b {
+		case i:
+			return A[a][j]
+		case j:
+			return A[a][i]
+		default:
+			return A[a][b]
+		}
+	}
+
+	return New(m, n, f)
+}
+
+// SwapCols swaps two columns.
+func (A Matrix) SwapCols(i, j int) {
+	for a := range A {
+		A[a][i], A[a][j] = A[a][j], A[a][i]
+	}
+}
+
 // SwapRows returns A with rows i and j swapped.
 func SwapRows(A Matrix, i, j int) Matrix {
 	m, n := A.Dimensions()
@@ -579,7 +604,8 @@ func (A Matrix) Solve(y vector.Vector) vector.Vector {
 	return vector.New(m, func(i int) float64 { return B[i][n-1] }) // x = A^-1*b
 }
 
-// Inverse of a square matrix. Caution: not all matrices, even square ones, are guarenteed to be invertible.
+// Inverse of a square matrix. Caution: not all matrices, even square ones, are
+// guarenteed to be invertible.
 func (A Matrix) Inverse() Matrix {
 	m, n := A.Dimensions()
 	if m != n {

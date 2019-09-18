@@ -5,6 +5,106 @@ import (
 	"testing"
 )
 
+func equalInts(a, b []int) bool {
+	n := len(a)
+	if n != len(b) {
+		return false
+	}
+
+	for i := 0; i < n; i++ {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+
+	return true
+}
+
+func TestBase(t *testing.T) {
+	tests := []struct {
+		n, b     int
+		exp, rec []int
+	}{
+		{
+			n:   15,
+			b:   2,
+			exp: []int{1, 1, 1, 1},
+		},
+		{
+			n:   15,
+			b:   3,
+			exp: []int{0, 2, 1},
+		},
+		{
+			n:   15,
+			b:   10,
+			exp: []int{5, 1},
+		},
+		{
+			n:   42,
+			b:   2,
+			exp: []int{0, 1, 0, 1, 0, 1},
+		},
+	}
+
+	for _, test := range tests {
+		test.rec = Base(test.n, test.b)
+		if !equalInts(test.exp, test.rec) {
+			t.Fatalf("expected %v\nreceived %v\n", test.exp, test.rec)
+		}
+	}
+}
+
+func TestBasePows(t *testing.T) {
+	tests := []struct {
+		n, b     int
+		exp, rec []int
+	}{
+		{
+			n:   1,
+			b:   2,
+			exp: []int{1},
+		},
+		{
+			n:   2,
+			b:   2,
+			exp: []int{0, 2},
+		},
+		{
+			n:   3,
+			b:   2,
+			exp: []int{1, 2},
+		},
+		{
+			n:   15,
+			b:   2,
+			exp: []int{1, 2, 4, 8},
+		},
+		{
+			n:   15,
+			b:   3,
+			exp: []int{0 * 1, 2 * 3, 1 * 9},
+		},
+		{
+			n:   15,
+			b:   10,
+			exp: []int{5, 10},
+		},
+		{
+			n:   42,
+			b:   2,
+			exp: []int{0, 2, 0, 8, 0, 32},
+		},
+	}
+
+	for _, test := range tests {
+		test.rec = BasePows(test.n, test.b)
+		if !equalInts(test.exp, test.rec) {
+			t.Fatalf("expected %v\nreceived %v\n", test.exp, test.rec)
+		}
+	}
+}
+
 func TestChoose(t *testing.T) {
 	tests := []struct {
 		n, k             int
@@ -122,6 +222,8 @@ func TestIsPrime(t *testing.T) {
 		a        int
 		exp, rec bool
 	}{
+
+		{a: 0, exp: false},
 		{a: 1, exp: false},
 		{a: 2, exp: true},
 		{a: 3, exp: true},
@@ -132,114 +234,40 @@ func TestIsPrime(t *testing.T) {
 		{a: 8, exp: false},
 		{a: 9, exp: false},
 		{a: 10, exp: false},
+		{a: 11, exp: true},
+		{a: 12, exp: false},
+		{a: 13, exp: true},
+		{a: 14, exp: false},
+		{a: 15, exp: false},
+		{a: 16, exp: false},
+		{a: 17, exp: true},
+		{a: 18, exp: false},
+		{a: 19, exp: true},
+		{a: 20, exp: false},
+
+		// Mersenne Prime: Mp := 2^p-1
+		{a: PowInt(2, 2) - 1, exp: true},
+		{a: PowInt(2, 3) - 1, exp: true},
+		{a: PowInt(2, 5) - 1, exp: true},
+		{a: PowInt(2, 7) - 1, exp: true},
+		{a: PowInt(2, 13) - 1, exp: true},
+		{a: PowInt(2, 17) - 1, exp: true},
+		{a: PowInt(2, 19) - 1, exp: true},
 	}
 
 	for _, test := range tests {
 		test.rec = IsPrime(test.a)
 		if test.exp != test.rec {
-			t.Fatalf("\nexpected: %t\nreceived: %t\n", test.exp, test.rec)
+			t.Fatalf("\na = %d\nexpected: %t\nreceived: %t\n", test.a, test.exp, test.rec)
 		}
 	}
 }
 
-func TestBase(t *testing.T) {
-	tests := []struct {
-		n, b     int
-		exp, rec []int
-	}{
-		{
-			n:   15,
-			b:   2,
-			exp: []int{1, 1, 1, 1},
-		},
-		{
-			n:   15,
-			b:   3,
-			exp: []int{0, 2, 1},
-		},
-		{
-			n:   15,
-			b:   10,
-			exp: []int{5, 1},
-		},
-		{
-			n:   42,
-			b:   2,
-			exp: []int{0, 1, 0, 1, 0, 1},
-		},
+func TestNegShift(t *testing.T) {
+	exp, rec := -2/2, -2>>1
+	if exp != rec {
+		t.Fatalf("expected %d\nreceived %d\n", exp, rec)
 	}
-
-	for _, test := range tests {
-		test.rec = Base(test.n, test.b)
-		if !equalInts(test.exp, test.rec) {
-			t.Fatalf("expected %v\nreceived %v\n", test.exp, test.rec)
-		}
-	}
-}
-
-func TestBasePows(t *testing.T) {
-	tests := []struct {
-		n, b     int
-		exp, rec []int
-	}{
-		{
-			n:   1,
-			b:   2,
-			exp: []int{1},
-		},
-		{
-			n:   2,
-			b:   2,
-			exp: []int{0, 2},
-		},
-		{
-			n:   3,
-			b:   2,
-			exp: []int{1, 2},
-		},
-		{
-			n:   15,
-			b:   2,
-			exp: []int{1, 2, 4, 8},
-		},
-		{
-			n:   15,
-			b:   3,
-			exp: []int{0 * 1, 2 * 3, 1 * 9},
-		},
-		{
-			n:   15,
-			b:   10,
-			exp: []int{5, 10},
-		},
-		{
-			n:   42,
-			b:   2,
-			exp: []int{0, 2, 0, 8, 0, 32},
-		},
-	}
-
-	for _, test := range tests {
-		test.rec = BasePows(test.n, test.b)
-		if !equalInts(test.exp, test.rec) {
-			t.Fatalf("expected %v\nreceived %v\n", test.exp, test.rec)
-		}
-	}
-}
-
-func equalInts(a, b []int) bool {
-	n := len(a)
-	if n != len(b) {
-		return false
-	}
-
-	for i := 0; i < n; i++ {
-		if a[i] != b[i] {
-			return false
-		}
-	}
-
-	return true
 }
 
 func TestPowInt(t *testing.T) {
@@ -333,23 +361,16 @@ func TestPowInt(t *testing.T) {
 }
 
 func BenchmarkPowInt(b *testing.B) {
-	a, p := 2, 64
+	a, p := 10, 10
 	for i := 0; i < b.N; i++ {
 		_ = PowInt(a, p)
 	}
 }
 
 func BenchmarkGomathPow(b *testing.B) {
-	a, p := 2, 64
+	a, p := 10, 10
 	for i := 0; i < b.N; i++ {
 		_ = int(gomath.Pow(float64(a), float64(p)))
-	}
-}
-
-func TestNegShift(t *testing.T) {
-	exp, rec := -2/2, -2>>1
-	if exp != rec {
-		t.Fatalf("expected %d\nreceived %d\n", exp, rec)
 	}
 }
 

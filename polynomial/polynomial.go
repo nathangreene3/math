@@ -1,14 +1,12 @@
 package polynomial
 
-import (
-	"github.com/nathangreene3/math/stats"
-)
+import "github.com/nathangreene3/math"
 
 // A Polynomial is an ordered set of weights f = [a0, a1, ..., an-1] such that f(x) = a0 + a1*x + ... + an-1 x^(n-1) for any real x.
 type Polynomial []float64
 
 func (f Polynomial) degree() int {
-	return stats.MaxInt(len(f)-1, 0)
+	return math.MaxInt(len(f)-1, 0)
 }
 
 func (f Polynomial) evaluate(x float64) float64 {

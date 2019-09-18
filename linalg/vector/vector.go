@@ -5,7 +5,6 @@ import (
 	gomath "math"
 
 	"github.com/nathangreene3/math"
-	"github.com/nathangreene3/math/stats"
 )
 
 // ------------------------------------------------------------------
@@ -88,6 +87,11 @@ func (v Vector) Add(w Vector) {
 	for i := 0; i < n; i++ {
 		v[i] += w[i]
 	}
+}
+
+// Dimensions returns len(v).
+func (v Vector) Dimensions() int {
+	return len(v)
 }
 
 // Subtract returns v-w.
@@ -240,7 +244,7 @@ func (v Vector) Copy() Vector {
 // or follows w. Vectors v and w may be of different dimensions.
 func (v Vector) CompareTo(w Vector) int {
 	m, n := len(v), len(w)
-	min := stats.MinInt(m, n)
+	min := math.MinInt(m, n)
 	for i := 0; i < min; i++ {
 		switch {
 		case v[i] < w[i]:

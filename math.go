@@ -13,64 +13,6 @@ func Approx(x, y, prec float64) bool {
 	return gomath.Abs(x-y) <= prec
 }
 
-// Factor returns a map of factors to the number of times they divide
-// an integer n. That is, for each key-value pair (k,v), k divides n
-// v times. Each key will be a prime divisor, which means k will be
-// at least two. An integer is prime if its only Factor is itself
-// (and 1, which is called the empty prime).
-func Factor(n int) map[int]int {
-	if n < 1 {
-		panic("cannot factor non-positive integer")
-	}
-
-	// Theorem: If p is prime greater than 3, then p = 6k-1 or 6k+1.
-	// 1. Determine how many times 2 and 3 divide n, if at all.
-	// 2. Check all integers 6k-1 and 6k+1 less than sqrt(n) to help eliminate multiples of 2 and 3. This speeds up factoring three times over.
-	factors := make(map[int]int)
-	for ; n&1 == 0; n >>= 1 {
-		factors[2]++
-	}
-
-	for ; n%3 == 0; n /= 3 {
-		factors[3]++
-	}
-
-	for d := 5; d <= n; d += 4 {
-		for ; n%d == 0; n /= d {
-			factors[d]++
-		}
-
-		d += 2
-		for ; n%d == 0; n /= d {
-			factors[d]++
-		}
-	}
-
-	return factors
-}
-
-// IsPrime indicates if n is prime.
-func IsPrime(n int) bool {
-	if n < 2 {
-		return false // Prevents panic on non-positives and 1 isn't prime anyway
-	}
-
-	_, ok := Factor(n)[n]
-	return ok
-}
-
-// fermatTest returns true if p is composite and false if otherwise.
-// If p is prime, then p|a^(p-1) and true is returned. If p is not
-// prime, false is usually returned. This means that this test is a
-// composite test, but cannot guarentee p to be prime.
-func fermatTest(p int) bool {
-	a := 2
-	// for ; a < p && GCD(a, p) != 1; a++ {
-	// }
-
-	return PowInt(a, p-1)%p == 1
-}
-
 // Base converts a number into its base representation.
 func Base(n, b int) []int {
 	if n < 0 {
@@ -126,8 +68,93 @@ func BasePows(n, b int) []int {
 	return pows
 }
 
-// GCD returns the largest divisor of both a and b. If GCD(a,b) == 1,
-// then a and b are relatively prime.
+// Choose returns n-Choose-k, or n!/(k!(n-k)!).
+func Choose(n, k int) int {
+	return Pascal(n + 1)[n][k]
+}
+
+// CoVar returns the covariance of two sets of values.
+func CoVar(x, y []float64) float64 {
+	n := len(x)
+	if n != len(y) {
+		panic("dimension mismatch")
+	}
+
+	var (
+		mx, my = Mean(x), Mean(y)
+		cv     float64
+	)
+
+	for i := 0; i < n; i++ {
+		cv += (x[i] - mx) * (y[i] - my)
+	}
+
+	return cv / float64(n)
+}
+
+// Factor returns a map of factors to the number of times they divide an integer
+// n. That is, for each key-value pair (k,v), k divides n a total of v times. Each
+// key will be a prime divisor, which means k will be at least two. An integer is
+// prime if its only Factor is itself (and 1, which is called the empty prime).
+func Factor(n int) map[int]int {
+	if n < 1 {
+		panic("cannot factor non-positive integer")
+	}
+
+	// Theorem: If p is prime greater than 3, then p = 6k-1 or 6k+1.
+	// 1. Determine how many times 2 and 3 divide n, if at all.
+	// 2. Check all integers 6k-1 and 6k+1 less than sqrt(n) to help eliminate
+	//    multiples of 2 and 3. This speeds up factoring three times over.
+	factors := make(map[int]int)
+	for ; n&1 == 0; n >>= 1 {
+		factors[2]++
+	}
+
+	for ; n%3 == 0; n /= 3 {
+		factors[3]++
+	}
+
+	for d := 5; d <= n; d += 4 {
+		for ; n%d == 0; n /= d {
+			factors[d]++
+		}
+
+		d += 2
+		for ; n%d == 0; n /= d {
+			factors[d]++
+		}
+	}
+
+	return factors
+}
+
+// Factorial returns n!
+func Factorial(n int) int {
+	if n < 0 {
+		panic("n must be non-negative")
+	}
+
+	f := 1
+	for ; 1 < n; n-- {
+		f *= n
+	}
+
+	return f
+}
+
+// Fibonacci returns the nth Fibonacci term, where the 0th and 1st terms are 1 and
+// the nth term is the sum of the previous two terms.
+func Fibonacci(n int) int {
+	a0, a1 := 1, 1
+	for ; 1 < n; n-- {
+		a0, a1 = a1, a0+a1
+	}
+
+	return a1
+}
+
+// GCD returns the largest divisor of both a and b. If GCD(a,b) == 1, then a and b
+// are relatively prime.
 func GCD(a, b int) int {
 	if a < 0 || b < 0 {
 		panic("invalid sign")
@@ -142,6 +169,16 @@ func GCD(a, b int) int {
 	}
 
 	return a
+}
+
+// IsPrime indicates if n is prime.
+func IsPrime(n int) bool {
+	if n < 2 {
+		return false // Prevents panic on non-positives and 1 isn't prime anyway
+	}
+
+	_, ok := Factor(n)[n]
+	return ok
 }
 
 // LCM returns the largest multiple of a and b divisible by a and b.
@@ -162,34 +199,51 @@ func LCM(a, b int) int {
 	return a1
 }
 
-// Fibonacci returns the nth Fibonacci term, where the 0th and 1st
-// terms are 1 and the nth term is the sum of the previous two terms.
-func Fibonacci(n int) int {
-	a0, a1 := 1, 1
-	for ; 1 < n; n-- {
-		a0, a1 = a1, a0+a1
+// Max returns the maximum of x and y.
+func Max(x, y float64) float64 {
+	if x < y {
+		return y
 	}
 
-	return a1
+	return x
 }
 
-// Factorial returns n!
-func Factorial(n int) int {
-	if n < 0 {
-		panic("n must be non-negative")
+// MaxInt returns the maximum of x and y.
+func MaxInt(xs ...int) int {
+	max := xs[0]
+	for _, x := range xs[1:] {
+		if max < x {
+			max = x
+		}
 	}
 
-	f := 1
-	for ; 1 < n; n-- {
-		f *= n
-	}
-
-	return f
+	return max
 }
 
-// Choose returns n-Choose-k, or n!/(k!(n-k)!).
-func Choose(n, k int) int {
-	return Pascal(n + 1)[n][k]
+// Mean returns the Mean (or average) of a list of values.
+func Mean(x []float64) float64 {
+	return Sum(x) / float64(len(x))
+}
+
+// Min returns the minimum of x and y.
+func Min(x, y float64) float64 {
+	if x < y {
+		return x
+	}
+
+	return y
+}
+
+// MinInt returns the minimum of x and y.
+func MinInt(xs ...int) int {
+	min := xs[0]
+	for _, x := range xs[1:] {
+		if x < min {
+			min = x
+		}
+	}
+
+	return min
 }
 
 // Pascal returns Pascal's triangle, consisting of n levels. The
@@ -241,4 +295,44 @@ func PowInt(a, p int) int {
 	}
 
 	return y
+}
+
+// StDev returns the standard deviation of a list of values.
+func StDev(x []float64) float64 {
+	return gomath.Sqrt(Var(x))
+}
+
+// Sum returns the sum of a list of values.
+func Sum(x []float64) float64 {
+	var s float64
+	for _, xi := range x {
+		s += xi
+	}
+
+	return s
+}
+
+// SumInts returns the sum of a list of values.
+func SumInts(xs ...int) int {
+	var s int
+	for _, x := range xs {
+		s += x
+	}
+
+	return s
+}
+
+// Var returns the Var of a list of values.
+func Var(x []float64) float64 {
+	var (
+		m    = Mean(x)
+		v, t float64
+	)
+
+	for _, xi := range x {
+		t = xi - m
+		v += t * t
+	}
+
+	return v / float64(len(x)-1)
 }
