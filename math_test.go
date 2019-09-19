@@ -159,6 +159,21 @@ func TestFactor(t *testing.T) {
 		{n: 48, expected: map[int]int{2: 4, 3: 1}},
 		{n: 60, expected: map[int]int{2: 2, 3: 1, 5: 1}},
 		{n: 120, expected: map[int]int{2: 3, 3: 1, 5: 1}},
+
+		// Largest prime for each order of 10
+		{n: 997, expected: map[int]int{997: 1}},
+		{n: 7919, expected: map[int]int{7919: 1}},
+
+		// Mersenne primes
+		{n: 3, expected: map[int]int{3: 1}},
+		{n: 7, expected: map[int]int{7: 1}},
+		{n: 31, expected: map[int]int{31: 1}},
+		{n: 127, expected: map[int]int{127: 1}},
+		{n: 8191, expected: map[int]int{8191: 1}},
+		{n: 131071, expected: map[int]int{131071: 1}},
+		{n: 524287, expected: map[int]int{524287: 1}},
+		{n: 2147483647, expected: map[int]int{2147483647: 1}},
+		// {n: 2305843009213693951, expected: map[int]int{2305843009213693951: 1}}, // Largest possible without overflow2305843009213693951:1ing
 	}
 
 	for _, test := range tests {
@@ -356,6 +371,55 @@ func TestPowInt(t *testing.T) {
 		test.rec = PowInt(test.a, test.p)
 		if test.exp != test.rec {
 			t.Fatalf("expected %v\nreceived %v\n", test.exp, test.rec)
+		}
+	}
+}
+
+func TestEratosthenes(t *testing.T) {
+	primes := Eratosthenes(75000)
+	for _, p := range primes {
+		if !IsPrime(p) {
+			t.Fatalf("\np = %d is composite, not prime\n", p)
+		}
+	}
+}
+
+func TestTotient(t *testing.T) {
+	tests := []struct {
+		n   int
+		exp int
+		rec int
+	}{
+		{
+			n:   1,
+			exp: 1,
+		},
+		{
+			n:   2,
+			exp: 1,
+		},
+		{
+			n:   3,
+			exp: 2,
+		},
+		{
+			n:   4,
+			exp: 2,
+		},
+		{
+			n:   5,
+			exp: 4,
+		},
+		{
+			n:   6,
+			exp: 2,
+		},
+	}
+
+	for _, test := range tests {
+		test.rec = Totient(test.n)
+		if test.exp != test.rec {
+			t.Fatalf("\nphi(%d)\nexpected %d\nreceived %d\n", test.n, test.exp, test.rec)
 		}
 	}
 }

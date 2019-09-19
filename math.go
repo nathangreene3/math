@@ -2,6 +2,7 @@ package math
 
 import (
 	gomath "math"
+	"sort"
 )
 
 // Approx returns true if |x-y| <= prec.
@@ -73,6 +74,11 @@ func Choose(n, k int) int {
 	return Pascal(n + 1)[n][k]
 }
 
+// Cototient returns n-phi(n).
+func Cototient(n int) int {
+	return n - Totient(n)
+}
+
 // CoVar returns the covariance of two sets of values.
 func CoVar(x, y []float64) float64 {
 	n := len(x)
@@ -92,6 +98,34 @@ func CoVar(x, y []float64) float64 {
 	return cv / float64(n)
 }
 
+// Eratosthenes returns a list of prime integers up to and including n.
+func Eratosthenes(n int) []int {
+	if n < 2 {
+		return nil
+	}
+
+	pm := make(map[int]struct{})
+	for k := 2; k <= n; k++ {
+		pm[k] = struct{}{}
+	}
+
+	for p := 2; p <= n; p++ {
+		for k := range pm {
+			if p != k && k/p*p == k {
+				delete(pm, k)
+			}
+		}
+	}
+
+	primes := make([]int, 0, n)
+	for p := range pm {
+		primes = append(primes, p)
+	}
+
+	sort.Ints(primes)
+	return primes
+}
+
 // Factor returns a map of factors to the number of times they divide an integer
 // n. That is, for each key-value pair (k,v), k divides n a total of v times. Each
 // key will be a prime divisor, which means k will be at least two. An integer is
@@ -101,10 +135,16 @@ func Factor(n int) map[int]int {
 		panic("cannot factor non-positive integer")
 	}
 
-	// Theorem: If p is prime greater than 3, then p = 6k-1 or 6k+1.
+	// Theorem: If p is prime greater than 3, then p = 6k-1 or 6k+1 for some
+	// maximal k > 0.
+
+	// This does NOT mean all 6k-1 or 6k+1 are prime, only that we have to check
+	// numbers of the form 6k-1 and 6k+1 to be prime. This speeds up factoring
+	// three times over.
+
 	// 1. Determine how many times 2 and 3 divide n, if at all.
 	// 2. Check all integers 6k-1 and 6k+1 less than sqrt(n) to help eliminate
-	//    multiples of 2 and 3. This speeds up factoring three times over.
+	//    multiples of 2 and 3.
 	factors := make(map[int]int)
 	for ; n&1 == 0; n >>= 1 {
 		factors[2]++
@@ -320,6 +360,20 @@ func SumInts(xs ...int) int {
 	}
 
 	return s
+}
+
+// Totient returns phi(n) = n prod(1-1/p) for all primes p such that p|n.
+func Totient(n int) int {
+	var (
+		factors = Factor(n)
+		phi     = 1
+	)
+
+	for p, k := range factors {
+		phi *= PowInt(p, k-1) * (p - 1)
+	}
+
+	return phi
 }
 
 // Var returns the Var of a list of values.
