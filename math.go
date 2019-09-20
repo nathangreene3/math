@@ -127,9 +127,10 @@ func Eratosthenes(n int) []int {
 }
 
 // Factor returns a map of factors to the number of times they divide an integer
-// n. That is, for each key-value pair (k,v), k divides n a total of v times. Each
-// key will be a prime divisor, which means k will be at least two. An integer is
-// prime if its only Factor is itself (and 1, which is called the empty prime).
+// n. That is, for each key-value pair (k,v), k divides n a total of v times.
+// Each key will be a prime divisor, which means k will be at least two. An
+// integer is prime if its only Factor is itself (and 1, which is called the
+// empty prime).
 func Factor(n int) map[int]int {
 	if n < 1 {
 		panic("cannot factor non-positive integer")
@@ -182,8 +183,8 @@ func Factorial(n int) int {
 	return f
 }
 
-// Fibonacci returns the nth Fibonacci term, where the 0th and 1st terms are 1 and
-// the nth term is the sum of the previous two terms.
+// Fibonacci returns the nth Fibonacci term, where the 0th and 1st terms are 1
+// and the nth term is the sum of the previous two terms.
 func Fibonacci(n int) int {
 	a0, a1 := 1, 1
 	for ; 1 < n; n-- {
@@ -193,8 +194,8 @@ func Fibonacci(n int) int {
 	return a1
 }
 
-// GCD returns the largest divisor of both a and b. If GCD(a,b) == 1, then a and b
-// are relatively prime.
+// GCD returns the largest divisor of both a and b. If GCD(a,b) == 1, then a and
+// b are relatively prime.
 func GCD(a, b int) int {
 	if a < 0 || b < 0 {
 		panic("invalid sign")
@@ -286,8 +287,8 @@ func MinInt(xs ...int) int {
 	return min
 }
 
-// Pascal returns Pascal's triangle, consisting of n levels. The
-// (n,k)th entry is the value n!/(k!(n-k)!).
+// Pascal returns Pascal's triangle, consisting of n levels. The (n,k)th entry
+// is the value n!/(k!(n-k)!).
 func Pascal(n int) [][]int {
 	if n < 1 {
 		panic("n must be positive")
@@ -309,8 +310,8 @@ func Pascal(n int) [][]int {
 	return tri
 }
 
-// PowInt returns a^p for any integer a and non-zero integer p (exception: 0^0 is undefined and will panic).
-// This is still slower than int(gomath.Pow(float64(a),float64(p))).
+// PowInt returns a^p for any integer a and non-zero integer p (exception: 0^0
+// is undefined and will panic unlike most libraries).
 func PowInt(a, p int) int {
 	switch {
 	case a == 0:
@@ -364,12 +365,8 @@ func SumInts(xs ...int) int {
 
 // Totient returns phi(n) = n prod(1-1/p) for all primes p such that p|n.
 func Totient(n int) int {
-	var (
-		factors = Factor(n)
-		phi     = 1
-	)
-
-	for p, k := range factors {
+	phi := 1
+	for p, k := range Factor(n) {
 		phi *= PowInt(p, k-1) * (p - 1)
 	}
 

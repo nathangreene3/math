@@ -7,14 +7,13 @@ import (
 	"github.com/nathangreene3/math"
 )
 
-// ------------------------------------------------------------------
+// ------------------------------------------------------------------------------
 // RESOURCES
-// ------------------------------------------------------------------
-// Most methods defined here are taken from or are inspired by
-// Linear Algebra, 3rd Ed., by Stephen H. Friedberg, Arnold J. Insel,
-// and Lawrence E. Spence. Any page references in comments are in
-// reference to this source.
-// ------------------------------------------------------------------
+// ------------------------------------------------------------------------------
+// Most methods defined here are taken from or are inspired by Linear Algebra,
+// 3rd Ed., by Stephen H. Friedberg, Arnold J. Insel, and Lawrence E. Spence.
+// Any page references in comments are in reference to this source.
+// ------------------------------------------------------------------------------
 
 // Vector is an ordered n-tuple.
 type Vector []float64
@@ -22,12 +21,12 @@ type Vector []float64
 // Generator is a function defining the i-th entry of a vector.
 type Generator func(i int) float64
 
-// ------------------------------------------------------------------
+// ------------------------------------------------------------------------------
 // VECTOR CONSTRUCTORS
-// ------------------------------------------------------------------
+// ------------------------------------------------------------------------------
 
-// New generates a vector of dimension n with entries defined by a
-// generating function f.
+// New generates a vector of dimension n with entries defined by a generating
+// function f.
 func New(n int, f Generator) Vector {
 	v := make(Vector, 0, n)
 	for i := 0; i < n; i++ {
@@ -42,11 +41,12 @@ func Zero(n int) Vector {
 	return make(Vector, n)
 }
 
-// ------------------------------------------------------------------
+// ------------------------------------------------------------------------------
 // EXPORTED OPERATIONS ON VECTORS
-// ------------------------------------------------------------------
+// ------------------------------------------------------------------------------
 
-// Approx returns true if v approximates w for a given precision on the range [0,1].
+// Approx returns true if v approximates w for a given precision on the range
+// [0,1].
 func (v Vector) Approx(w Vector, prec float64) bool {
 	n := len(v)
 	if n != len(w) {
@@ -89,8 +89,8 @@ func (v Vector) Angle(w Vector) float64 {
 	return gomath.Acos(v.Unit().Dot(w.Unit()))
 }
 
-// CompareTo returns -1, 0, or 1 indicating v precedes, is equal to,
-// or follows w. Vectors v and w may be of different dimensions.
+// CompareTo returns -1, 0, or 1 indicating v precedes, is equal to, or follows
+// w. Vectors v and w may be of different dimensions.
 func (v Vector) CompareTo(w Vector) int {
 	m, n := len(v), len(w)
 	min := math.MinInt(m, n)
@@ -162,8 +162,8 @@ func (v Vector) Equal(w Vector) bool {
 	return v.CompareTo(w) == 0
 }
 
-// IsMultipleOf returns true if either v or w is a multiple of the
-// other (v = aw for some real a).
+// IsMultipleOf returns true if either v or w is a multiple of the other
+// (v = aw for some real a).
 func (v Vector) IsMultipleOf(w Vector) bool {
 	if v.CompareTo(w) == 0 {
 		return true
@@ -246,8 +246,7 @@ func (v Vector) Projection(w Vector) Vector {
 	return Multiply(w.Dot(v)/(r*r), v)
 }
 
-// Unit returns v/|v|, a vector of length one pointing in the
-// direction of v.
+// Unit returns v/|v|, a vector of length one pointing in the direction of v.
 func (v Vector) Unit() Vector {
 	return Divide(v.Length(), v)
 }

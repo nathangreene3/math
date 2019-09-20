@@ -22,7 +22,8 @@ func New(S ...Comparable) Set {
 	return B
 }
 
-// Contains returns the key of a value and true if it is found. If not, then the next available key and false is returned.
+// Contains returns the key of a value and true if it is found. If not, then the
+// next available key and false is returned.
 func (S Set) Contains(v Comparable) (int, bool) {
 	n := len(S)
 	if n == 0 {
@@ -48,7 +49,8 @@ func (S Set) Contains(v Comparable) (int, bool) {
 	return n, false
 }
 
-// Disjoint returns a set containing values in A and B, but not in both A and B ((AuB)-(AnB)).
+// Disjoint returns a set containing values in A and B, but not in both A and B
+// (AuB-AnB).
 func (S Set) Disjoint(T Set) Set {
 	U := make(Set)
 	var k int
@@ -69,7 +71,8 @@ func (S Set) Disjoint(T Set) Set {
 	return U
 }
 
-// Insert a value into a set. Returns the key. Duplicate values will not be inserted, but the current key of the existing value will be returned.
+// Insert a value into a set. Returns the key. Duplicate values will not be
+// inserted, but the current key of the existing value will be returned.
 func (S Set) Insert(v Comparable) int {
 	k, ok := S.Contains(v)
 	if !ok {
@@ -79,7 +82,8 @@ func (S Set) Insert(v Comparable) int {
 	return k
 }
 
-// Intersect of A and B returns a set containing values found in both A and B (AnB).
+// Intersect of A and B returns a set containing values found in both A and B
+// (AnB).
 func (S Set) Intersect(T Set) Set {
 	if len(S) < len(T) {
 		U := make(Set)
@@ -136,7 +140,8 @@ func (S Set) RightDisjoint(T Set) Set {
 	return T.LeftDisjoint(S)
 }
 
-// Union of A and B returns a set containing values in either A or B (AuB). It is synonymous with joining or combining sets.
+// Union of A and B returns a set containing values in either A or B (AuB). It
+// is synonymous with joining or combining sets.
 func (S Set) Union(T Set) Set {
 	U := make(Set)
 	var k int
@@ -170,7 +175,8 @@ func (S Set) Cardinality() int {
 	return len(S)
 }
 
-// Equal returns true if A and B each contain the same values. Note that the keys may differ.
+// Equal returns true if A and B each contain the same values. Note that the
+// keys may differ.
 func (S Set) Equal(T Set) bool {
 	if len(S) != len(T) {
 		return false

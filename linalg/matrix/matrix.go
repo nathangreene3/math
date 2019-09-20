@@ -8,14 +8,13 @@ import (
 	"github.com/nathangreene3/math/linalg/vector"
 )
 
-// ------------------------------------------------------------------
+// ------------------------------------------------------------------------------
 // RESOURCES
-// ------------------------------------------------------------------
-// Most methods defined here are taken from or are inspired by
-// Linear Algebra, 3rd Ed., by Stephen H. Friedberg, Arnold J. Insel,
-// and Lawrence E. Spence. Any page references in comments are in
-// reference to this source.
-// ------------------------------------------------------------------
+// ------------------------------------------------------------------------------
+// Most methods defined here are taken from or are inspired by Linear Algebra,
+// 3rd Ed., by Stephen H. Friedberg, Arnold J. Insel, and Lawrence E. Spence.
+// Any page references in comments are in reference to this source.
+// ------------------------------------------------------------------------------
 
 // Matrix is a set of vectors.
 type Matrix []vector.Vector
@@ -23,12 +22,12 @@ type Matrix []vector.Vector
 // Generator is a function defining the (i,j)th entry of a matrix.
 type Generator func(i, j int) float64
 
-// ------------------------------------------------------------------
+// ------------------------------------------------------------------------------
 // MATRIX CONSTRUCTORS
-// ------------------------------------------------------------------
+// ------------------------------------------------------------------------------
 
-// New generates an m-by-n matrix with entries defined by a
-// generating function f.
+// New generates an m-by-n matrix with entries defined by a generating function
+// f.
 func New(m, n int, f Generator) Matrix {
 	A := make(Matrix, 0, m)
 	for i := 0; i < m; i++ {
@@ -59,11 +58,11 @@ func Identity(m, n int) Matrix {
 	return New(m, n, f)
 }
 
-// ------------------------------------------------------------------
+// ------------------------------------------------------------------------------
 // OPERATIONS ON MATRICES
-// ------------------------------------------------------------------
+// ------------------------------------------------------------------------------
 // In general, A.F(B) updates A and F(A,B) returns a new matrix.
-// ------------------------------------------------------------------
+// ------------------------------------------------------------------------------
 
 // Add returns the sum of two matrices.
 func Add(A, B Matrix) Matrix {
@@ -119,14 +118,14 @@ func (A Matrix) AddRowToRow(i, j int) {
 	A[i].Add(A[j])
 }
 
-// AppendColumn returns a matrix that is the joining of a given
-// matrix with a column Vector.
+// AppendColumn returns a matrix that is the joining of a given matrix with a
+// column Vector.
 func (A Matrix) AppendColumn(x vector.Vector) Matrix {
 	return A.Join(ColumnMatrix(x))
 }
 
-// AppendRow returns a matrix that is the joining of a given matrix
-// with a row vector.
+// AppendRow returns a matrix that is the joining of a given matrix with a row
+// vector.
 func (A Matrix) AppendRow(x vector.Vector) Matrix {
 	if _, n := A.Dimensions(); n != len(x) {
 		panic("matrix columns must be equal to vector dimensions")
@@ -135,7 +134,8 @@ func (A Matrix) AppendRow(x vector.Vector) Matrix {
 	return append(A, x)
 }
 
-// Approx returns true if A approximates B for a given precision on the range [0,1].
+// Approx returns true if A approximates B for a given precision on the range
+// [0,1].
 func (A Matrix) Approx(B Matrix, prec float64) bool {
 	ma, na := A.Dimensions()
 	mb, nb := B.Dimensions()
@@ -162,8 +162,7 @@ func ColumnMatrix(v vector.Vector) Matrix {
 	return New(len(v), 1, func(i, j int) float64 { return v[i] })
 }
 
-// CompareTo returns -1, 0, 1 indicating A precedes, is equal to, or
-// follows B. Panics if matrices are not of equal dimension.
+// CompareTo returns -1, 0, 1 indicating A precedes, is equal to, or follows B.
 func (A Matrix) CompareTo(B Matrix) int {
 	ma, na := A.Dimensions()
 	mb, nb := B.Dimensions()
@@ -238,9 +237,8 @@ func (A Matrix) Determinant() float64 {
 	return det
 }
 
-// Dimensions returns the Dimensions (number of rows, number of
-// columns) of a matrix. Panics if number of columns is not constant
-// for each row.
+// Dimensions returns the Dimensions (number of rows, number of columns) of a
+// matrix.
 func (A Matrix) Dimensions() (int, int) {
 	m, n := len(A), len(A[0])
 	for i := range A {
@@ -252,14 +250,13 @@ func (A Matrix) Dimensions() (int, int) {
 	return m, n
 }
 
-// Equals returns true if two matrices are equal in dimension and
-// for each entry. Otherwise, it returns false.
+// Equals returns true if two matrices are equal in dimension and for each
+// entry. Otherwise, it returns false.
 func (A Matrix) Equals(B Matrix) bool {
 	return A.CompareTo(B) == 0
 }
 
 // Join returns a matrix that is the joining of two given matrices.
-// Panics if number of rows are not equal.
 func (A Matrix) Join(B Matrix) Matrix {
 	ma, na := A.Dimensions()
 	mb, nb := B.Dimensions()
@@ -387,8 +384,8 @@ func Multiply(As ...Matrix) Matrix {
 	return multiplyByOrder(order, 0, n-1, As...)
 }
 
-// multiplyByOrder returns the product of matrices by multiplying by
-// a given order. Initiate by calling on i = 0 and j = n-1.
+// multiplyByOrder returns the product of matrices by multiplying by a given
+// order. Initiate by calling on i = 0 and j = n-1.
 func multiplyByOrder(s [][]int, i, j int, As ...Matrix) Matrix {
 	if i < j {
 		return multiplyByOrder(s, i, s[i][j], As...).multiply(multiplyByOrder(s, s[i][j]+1, j, As...))
@@ -435,7 +432,8 @@ func (A Matrix) MultiplyRow(i int, a float64) {
 	A[i].Multiply(a)
 }
 
-// Pow returns A^p, for square matrix A and 0 <= p.
+// Pow returns A^p, for square matrix A and -1 <= p. If p = -1, the inverse is
+// returned. All other negative values for p will panic.
 func Pow(A Matrix, p int) Matrix {
 	m, n := A.Dimensions()
 	switch {
@@ -690,13 +688,14 @@ func RowMatrix(v vector.Vector) Matrix {
 	return New(1, len(v), func(i, j int) float64 { return v[j] })
 }
 
-// Sort A such that the largest leading indices are at the top
-// (index 0 is the top).
+// Sort A such that the largest leading indices are at the top (index 0 is the
+// top).
 func (A Matrix) Sort() {
 	sort.SliceStable(A, func(i, j int) bool { return 0 < A[i].CompareTo(A[j]) })
 }
 
-// String returns a formatted string representation of a matrix. TODO: Determine if this is needed.
+// String returns a formatted string representation of a matrix. TODO: Determine
+// if this is needed.
 func (A Matrix) String() string {
 	var (
 		m, n = A.Dimensions()

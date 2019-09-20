@@ -414,6 +414,22 @@ func TestTotient(t *testing.T) {
 			n:   6,
 			exp: 2,
 		},
+		{
+			n:   7,
+			exp: 6,
+		},
+		{
+			n:   8,
+			exp: 4,
+		},
+		{
+			n:   9,
+			exp: 6,
+		},
+		{
+			n:   10,
+			exp: 4,
+		},
 	}
 
 	for _, test := range tests {
