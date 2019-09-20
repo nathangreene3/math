@@ -62,11 +62,6 @@ func (v Vector) Approx(w Vector, prec float64) bool {
 	return true
 }
 
-// Length returns |v|. This is NOT len(v).
-func (v Vector) Length() float64 {
-	return gomath.Sqrt(v.Dot(v))
-}
-
 // Add returns v+w.
 func Add(v, w Vector) Vector {
 	n := len(v)
@@ -89,36 +84,50 @@ func (v Vector) Add(w Vector) {
 	}
 }
 
+// Angle returns the Angle between two vectors.
+func (v Vector) Angle(w Vector) float64 {
+	return gomath.Acos(v.Unit().Dot(w.Unit()))
+}
+
+// CompareTo returns -1, 0, or 1 indicating v precedes, is equal to,
+// or follows w. Vectors v and w may be of different dimensions.
+func (v Vector) CompareTo(w Vector) int {
+	m, n := len(v), len(w)
+	min := math.MinInt(m, n)
+	for i := 0; i < min; i++ {
+		switch {
+		case v[i] < w[i]:
+			return -1
+		case w[i] < v[i]:
+			return 1
+		}
+	}
+
+	switch {
+	case m < n:
+		return -1
+	case n < m:
+		return 1
+	default:
+		return 0
+	}
+}
+
+// Complimentary returns -v.
+func (v Vector) Complimentary() Vector {
+	return Multiply(-1, v)
+}
+
+// Copy a vector.
+func (v Vector) Copy() Vector {
+	w := make(Vector, len(v))
+	copy(w, v)
+	return w
+}
+
 // Dimensions returns len(v).
 func (v Vector) Dimensions() int {
 	return len(v)
-}
-
-// Subtract returns v-w.
-func Subtract(v, w Vector) Vector {
-	n := len(v)
-	if n != len(w) {
-		panic("dimension mismatch")
-	}
-
-	return New(n, func(i int) float64 { return v[i] - w[i] })
-}
-
-// Subtract w from v.
-func (v Vector) Subtract(w Vector) {
-	v.Add(Multiply(-1, w))
-}
-
-// Multiply returns av.
-func Multiply(a float64, v Vector) Vector {
-	return New(len(v), func(i int) float64 { return a * v[i] })
-}
-
-// Multiply each value by a.
-func (v Vector) Multiply(a float64) {
-	for i := range v {
-		v[i] *= a
-	}
 }
 
 // Divide returns v/a.
@@ -148,48 +157,9 @@ func (v Vector) Dot(w Vector) float64 {
 	return s
 }
 
-// Unit returns v/|v|, a vector of length one pointing in the
-// direction of v.
-func (v Vector) Unit() Vector {
-	return Divide(v.Length(), v)
-}
-
-// Angle returns the Angle between two vectors.
-func (v Vector) Angle(w Vector) float64 {
-	return gomath.Acos(v.Unit().Dot(w.Unit()))
-}
-
-// Projection returns the projection of w onto v (proj_v(w)).
-func (v Vector) Projection(w Vector) Vector {
-	r := v.Length()
-	return Multiply(w.Dot(v)/(r*r), v)
-}
-
-// Rotate2D returns a vector rotated from v's position by an angle in
-// radians.
-func (v Vector) Rotate2D(a float64) {
-	v0, v1 := v[0], v[1]
-	sin, cos := gomath.Sin(a), gomath.Cos(a)
-	v[0], v[1] = v0*cos-v1*sin, v0*sin+v1*cos
-}
-
-// OrthonormalBasis returns the typical set of unit vectors spanning
-// R^n.
-func OrthonormalBasis(n int) []Vector {
-	b := make([]Vector, 0, n)
-	for i := 0; i < n; i++ {
-		b = append(b, OrthonormalVector(i, n))
-	}
-
-	return b
-}
-
-// OrthonormalVector returns the vector (0,...,0,1,0,...,0) of length
-// n and the ith value set to 1.
-func OrthonormalVector(i, n int) Vector {
-	v := make(Vector, n)
-	v[i]++
-	return v
+// Equal returns the comparison v = w.
+func (v Vector) Equal(w Vector) bool {
+	return v.CompareTo(w) == 0
 }
 
 // IsMultipleOf returns true if either v or w is a multiple of the
@@ -233,43 +203,51 @@ func (v Vector) IsMultipleOf(w Vector) bool {
 	return true
 }
 
-// Copy a vector.
-func (v Vector) Copy() Vector {
-	w := make(Vector, len(v))
-	copy(w, v)
-	return w
+// Length returns |v|. This is NOT len(v).
+func (v Vector) Length() float64 {
+	return gomath.Sqrt(v.Dot(v))
 }
 
-// CompareTo returns -1, 0, or 1 indicating v precedes, is equal to,
-// or follows w. Vectors v and w may be of different dimensions.
-func (v Vector) CompareTo(w Vector) int {
-	m, n := len(v), len(w)
-	min := math.MinInt(m, n)
-	for i := 0; i < min; i++ {
-		switch {
-		case v[i] < w[i]:
-			return -1
-		case w[i] < v[i]:
-			return 1
-		}
-	}
-
-	switch {
-	case m < n:
-		return -1
-	case n < m:
-		return 1
-	default:
-		return 0
-	}
+// Multiply returns av.
+func Multiply(a float64, v Vector) Vector {
+	return New(len(v), func(i int) float64 { return a * v[i] })
 }
 
-// Equal returns the comparison v = w.
-func (v Vector) Equal(w Vector) bool {
-	return v.CompareTo(w) == 0
+// Multiply each value by a.
+func (v Vector) Multiply(a float64) {
+	for i := range v {
+		v[i] *= a
+	}
 }
 
 // String returns a string-representation of a vector.
 func (v Vector) String() string {
 	return fmt.Sprintf("%0.3f", v) // TODO: Find the fastest way to stringify slices.
+}
+
+// Subtract returns v-w.
+func Subtract(v, w Vector) Vector {
+	n := len(v)
+	if n != len(w) {
+		panic("dimension mismatch")
+	}
+
+	return New(n, func(i int) float64 { return v[i] - w[i] })
+}
+
+// Subtract w from v.
+func (v Vector) Subtract(w Vector) {
+	v.Add(Multiply(-1, w))
+}
+
+// Projection returns the projection of w onto v (proj_v(w)).
+func (v Vector) Projection(w Vector) Vector {
+	r := v.Length()
+	return Multiply(w.Dot(v)/(r*r), v)
+}
+
+// Unit returns v/|v|, a vector of length one pointing in the
+// direction of v.
+func (v Vector) Unit() Vector {
+	return Divide(v.Length(), v)
 }

@@ -102,8 +102,8 @@ func AddColToCol(A Matrix, i, j int) Matrix {
 
 // AddColToCol adds column j to column i.
 func (A Matrix) AddColToCol(i, j int) {
-	for k := range A {
-		A[k][i] += A[k][j]
+	for _, a := range A {
+		a[i] += a[j]
 	}
 }
 
@@ -173,11 +173,10 @@ func (A Matrix) CompareTo(B Matrix) int {
 
 	for i := 0; i < ma; i++ {
 		for j := 0; j < na; j++ {
-			if A[i][j] < B[i][j] {
+			switch {
+			case A[i][j] < B[i][j]:
 				return -1
-			}
-
-			if B[i][j] < A[i][j] {
+			case B[i][j] < A[i][j]:
 				return 1
 			}
 		}
@@ -544,8 +543,8 @@ func SwapCols(A Matrix, i, j int) Matrix {
 
 // SwapCols swaps two columns.
 func (A Matrix) SwapCols(i, j int) {
-	for a := range A {
-		A[a][i], A[a][j] = A[a][j], A[a][i]
+	for _, a := range A {
+		a[i], a[j] = a[j], a[i]
 	}
 }
 
@@ -595,9 +594,9 @@ func (A Matrix) Solve(y vector.Vector) vector.Vector {
 		}
 	}
 
-	for i := range B {
-		if B[i][i] != 0 {
-			B[i].Divide(B[i][i])
+	for i, b := range B {
+		if b[i] != 0 {
+			b.Divide(b[i])
 		}
 	}
 
@@ -633,9 +632,9 @@ func (A Matrix) Inverse() Matrix {
 		}
 	}
 
-	for i := range B {
-		if B[i][i] != 0 {
-			B[i].Divide(B[i][i])
+	for i, b := range B {
+		if b[i] != 0 {
+			b.Divide(b[i])
 		}
 	}
 
@@ -660,6 +659,7 @@ func (A Matrix) RemoveColumn(i int) Matrix {
 func (A Matrix) RemoveMultiples() Matrix {
 	B := A.Copy()
 	B.Sort()
+
 	m, _ := B.Dimensions()
 	for i := 0; i+1 < m; i++ {
 		for j := i + 1; j < m; j++ {
@@ -698,8 +698,11 @@ func (A Matrix) Sort() {
 
 // String returns a formatted string representation of a matrix. TODO: Determine if this is needed.
 func (A Matrix) String() string {
-	sb := strings.Builder{}
-	m, n := A.Dimensions()
+	var (
+		m, n = A.Dimensions()
+		sb   strings.Builder
+	)
+
 	sb.Grow(2*m*(n+1) + 1)
 	sb.WriteByte(byte('['))
 	sb.WriteString(A[0].String())
@@ -727,13 +730,12 @@ func Transpose(A Matrix) Matrix {
 // Vector converts a row or column matrix to a vector.
 func (A Matrix) Vector() vector.Vector {
 	m, n := A.Dimensions()
-	if m == 1 {
+	switch {
+	case m == 1:
 		return vector.New(n, func(i int) float64 { return A[0][i] })
-	}
-
-	if n == 1 {
+	case n == 1:
 		return vector.New(m, func(i int) float64 { return A[i][0] })
+	default:
+		panic("invalid dimensions")
 	}
-
-	panic("invalid dimensions")
 }
