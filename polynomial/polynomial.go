@@ -1,6 +1,10 @@
 package polynomial
 
-import "github.com/nathangreene3/math"
+import (
+	"github.com/nathangreene3/math"
+	"github.com/nathangreene3/math/linalg/matrix"
+	"github.com/nathangreene3/math/linalg/vector"
+)
 
 // A Polynomial is an ordered set of weights f = [a0, a1, ..., an-1] such that f(x) = a0 + a1*x + ... + an-1 x^(n-1) for any real x.
 type Polynomial []float64
@@ -8,23 +12,18 @@ type Polynomial []float64
 // New returns a polynomial defined as f = [a0, a1, ..., an-1] for each
 // coeficient ak.
 func New(coefs ...float64) Polynomial {
-	f := make(Polynomial, 0, len(coefs))
-	for _, a := range coefs {
-		f = append(f, a)
-	}
-
-	return f
+	return append(make(Polynomial, 0, len(coefs)), coefs...)
 }
 
-// add returns f+g.
-func add(f, g Polynomial) Polynomial {
-	h := f.copy()
-	h.add(g)
+// Add returns f+g.
+func Add(f, g Polynomial) Polynomial {
+	h := f.Copy()
+	h.Add(g)
 	return h
 }
 
-// add g to f.
-func (f Polynomial) add(g Polynomial) {
+// Add g to f.
+func (f Polynomial) Add(g Polynomial) {
 	n := len(f)
 	if n != len(g) {
 		panic("degree mismatch")
@@ -35,24 +34,26 @@ func (f Polynomial) add(g Polynomial) {
 	}
 }
 
-// copy a polynomial.
-func (f Polynomial) copy() Polynomial {
-	return New(f...)
+// Copy a polynomial.
+func (f Polynomial) Copy() Polynomial {
+	g := make(Polynomial, len(f))
+	copy(g, f)
+	return g
 }
 
-// degree returns the highest power of f.
-func (f Polynomial) degree() int {
+// Degree returns the highest power of f.
+func (f Polynomial) Degree() int {
 	return math.MaxInt(len(f)-1, 0)
 }
 
-// differentiate returns df/dx.
+// differentiate returns df/dx. TODO
 func (f Polynomial) differentiate() Polynomial {
 	if len(f) < 2 {
 		return nil
 	}
 
+	g := f.Copy()[1:]
 	p := 1.0
-	g := f.copy()[1:]
 	for i := range g {
 		g[i] *= p
 		p++
@@ -61,31 +62,36 @@ func (f Polynomial) differentiate() Polynomial {
 	return g
 }
 
-// divide returns 1/a*f.
-func divide(a float64, f Polynomial) Polynomial {
-	return multiply(1.0/a, f)
+// Divide returns 1/a*f.
+func Divide(a float64, f Polynomial) Polynomial {
+	g := f.Copy()
+	g.Divide(a)
+	return g
 }
 
-// divide f by a.
-func (f Polynomial) divide(a float64) {
+// Divide f by a.
+func (f Polynomial) Divide(a float64) {
 	for i := range f {
 		f[i] /= a
 	}
 }
 
-// evaluate ...
-func (f Polynomial) evaluate(x float64) float64 {
-	var y float64 // y = f(x)
-	p := 1.0      // p = x^i
-	for i := range f {
-		y += f[i] * p
+// Evaluate returns f(x).
+func (f Polynomial) Evaluate(x float64) float64 {
+	var (
+		y float64 // y = f(x)
+		p = 1.0   // p = x^i, for i = 0, 1, ..., n-1
+	)
+
+	for _, a := range f {
+		y += a * p
 		p *= x
 	}
 
 	return y
 }
 
-// integrate ...
+// integrate returns the antiderivative of f. TODO
 func (f Polynomial) integrate() Polynomial {
 	g := make(Polynomial, 1, len(f)+1)
 	for i := range f {
@@ -95,29 +101,73 @@ func (f Polynomial) integrate() Polynomial {
 	return g
 }
 
-// multiply returns a*f.
-func multiply(a float64, f Polynomial) Polynomial {
-	g := f.copy()
-	g.multiply(a)
+// integrateRange returns the integral of f over [x0,x1]. TODO
+func (f Polynomial) integrateRange(x0, x1 float64) float64 {
+	g := f.integrate()
+	return g.Evaluate(x1) - g.Evaluate(x0)
+}
+
+// Multiply returns a*f.
+func Multiply(a float64, f Polynomial) Polynomial {
+	g := f.Copy()
+	g.Multiply(a)
 	return g
 }
 
-// multiply f by a.
-func (f Polynomial) multiply(a float64) {
+// Multiply f by a.
+func (f Polynomial) Multiply(a float64) {
 	for i := range f {
 		f[i] *= a
 	}
 }
 
+// Of returns (fog)(x) = f(g(x)).
+func (f Polynomial) Of(g Polynomial, x float64) float64 {
+	return f.Evaluate(g.Evaluate(x))
+}
+
+// pow returns f^n. TODO
+func (f Polynomial) pow(n int) Polynomial {
+	switch {
+	case n < 1:
+		panic("indeterminant form")
+	case n == 1:
+		return f.Copy()
+	}
+
+	// Given G = [a0 a1 ... an-1], f^n = F^(n-1)*f, where
+	// F = [ a0   a0   ...   a0 ]
+	//     [ a1   a1   ...   a1 ]
+	//     [           ...      ]
+	//     [ an-1 an-1 ... an-1 ]
+	// The coefficients of g = f^n are defined by summing the terms off the secondary diagonals.
+	var (
+		dims = len(f)
+		G    = matrix.Multiply(matrix.Pow(matrix.New(dims, dims, func(i, j int) float64 { return f[i] }), n-1), matrix.ColumnMatrix(vector.Vector(f)))
+		g    = make(Polynomial, n*dims)
+		k    int
+	)
+
+	for i, r := range G {
+		k = i
+		for _, v := range r {
+			g[k] += v
+			k++
+		}
+	}
+
+	return g
+}
+
 // Subtract returns f-g.
-func subtract(f, g Polynomial) Polynomial {
-	h := f.copy()
-	h.subtract(g)
+func Subtract(f, g Polynomial) Polynomial {
+	h := f.Copy()
+	h.Subtract(g)
 	return h
 }
 
 // Subtract g from f.
-func (f Polynomial) subtract(g Polynomial) {
+func (f Polynomial) Subtract(g Polynomial) {
 	n := len(f)
 	if n != len(g) {
 		panic("degree mismatch")
@@ -128,15 +178,13 @@ func (f Polynomial) subtract(g Polynomial) {
 	}
 }
 
-// trim removes the higher powers that have zero valued coefficients.
-func (f Polynomial) trim() Polynomial {
-	n := len(f)
-	if n == 0 {
-		return nil
-	}
+// Trim removes the higher powers that have zero valued coefficients.
+func (f Polynomial) Trim() Polynomial {
+	// [1,2,3,0,0] --> [1,2,3]
 
+	n := len(f)
 	for ; 0 < n && f[n-1] == 0; n-- {
 	}
 
-	return f[:n].copy()
+	return f[:n].Copy()
 }
