@@ -121,7 +121,14 @@ func (f Polynomial) Multiply(a float64) {
 	}
 }
 
-// Of returns (fog)(x) = f(g(x)).
+// of returns fog. This does not evaluate fog at x. To compute (fog)(x), use
+// f.Of(g, x). TODO
+func of(f, g Polynomial) Polynomial {
+	return nil
+}
+
+// Of returns (fog)(x) = f(g(x)). This evaluates fog at x. To get the Polynomial
+// fog, use Of(f, g).
 func (f Polynomial) Of(g Polynomial, x float64) float64 {
 	return f.Evaluate(g.Evaluate(x))
 }
@@ -138,9 +145,10 @@ func (f Polynomial) pow(n int) Polynomial {
 	// Given G = [a0 a1 ... an-1], f^n = F^(n-1)*f, where
 	// F = [ a0   a0   ...   a0 ]
 	//     [ a1   a1   ...   a1 ]
-	//     [           ...      ]
+	//     [ ...  ...  ...  ... ]
 	//     [ an-1 an-1 ... an-1 ]
-	// The coefficients of g = f^n are defined by summing the terms off the secondary diagonals.
+	// The coefficients of g = f^n are defined by summing the terms off the
+	// secondary diagonals.
 	var (
 		dims = len(f)
 		G    = matrix.Multiply(matrix.Pow(matrix.New(dims, dims, func(i, j int) float64 { return f[i] }), n-1), matrix.ColumnMatrix(vector.Vector(f)))
