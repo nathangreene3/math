@@ -2,41 +2,32 @@ package main
 
 import (
 	"fmt"
-
-	"github.com/nathangreene3/math"
-	"github.com/nathangreene3/table"
+	"strconv"
+	"strings"
 )
 
 func main() {
-	var (
-		left, right    int
-		xFacts, yFacts string
-		n              = 1 << 10
-		t              = table.New("", table.FltFmtNoExp, 0, n, 6)
-	)
+	fmt.Println(fizzbuzz(3, 5, 100))
+}
 
-	t.SetHeader(table.Header{"x", "y", "(x^2+x)/2", "y^2", "Facts of x", "Facts of y"})
-	for x := 0; x < n; x++ {
-		left = x * (x + 1) >> 1
-		if x == 0 {
-			xFacts = ""
-		} else {
-			xFacts = fmt.Sprint(math.Factor(x))
-		}
-
-		for y := 0; y < n; y++ {
-			right = y * y
-			if y == 0 {
-				yFacts = ""
-			} else {
-				yFacts = fmt.Sprint(math.Factor(y))
-			}
-
-			if left == right {
-				t.AppendRow(table.Row{x, y, left, right, xFacts, yFacts})
-			}
-		}
+func fizzbuzz(a, b, n int) string {
+	s := make([]string, n)
+	for i := 0; i < n; i++ {
+		s[i] = strconv.Itoa(i + 1)
 	}
 
-	fmt.Println(t.String())
+	for i := a - 1; i < n; i += a {
+		s[i] = "Fizz"
+	}
+
+	for i := b - 1; i < n; i += b {
+		s[i] = "Buzz"
+	}
+
+	ab := a * b
+	for i := ab - 1; i < n; i += ab {
+		s[i] = "FizzBuzz"
+	}
+
+	return strings.Join(s, "\n")
 }

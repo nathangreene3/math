@@ -112,7 +112,7 @@ func (a *Permutation) isPermutation() bool {
 		switch {
 		case v < 0, n <= v:
 			return false
-		case bm.Has(1 << uint64(v)):
+		case bm.IsSet(1 << uint64(v)):
 			return false
 		default:
 			bm.Set(1 << uint64(v))
