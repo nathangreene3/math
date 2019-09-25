@@ -89,9 +89,9 @@ func (v Vector) Angle(w Vector) float64 {
 	return gomath.Acos(v.Unit().Dot(w.Unit()))
 }
 
-// CompareTo returns -1, 0, or 1 indicating v precedes, is equal to, or follows
+// Compare returns -1, 0, or 1 indicating v precedes, is equal to, or follows
 // w. Vectors v and w may be of different dimensions.
-func (v Vector) CompareTo(w Vector) int {
+func (v Vector) Compare(w Vector) int {
 	m, n := len(v), len(w)
 	min := math.MinInt(m, n)
 	for i := 0; i < min; i++ {
@@ -159,13 +159,13 @@ func (v Vector) Dot(w Vector) float64 {
 
 // Equal returns the comparison v = w.
 func (v Vector) Equal(w Vector) bool {
-	return v.CompareTo(w) == 0
+	return v.Compare(w) == 0
 }
 
 // IsMultipleOf returns true if either v or w is a multiple of the other
 // (v = aw for some real a).
 func (v Vector) IsMultipleOf(w Vector) bool {
-	if v.CompareTo(w) == 0 {
+	if v.Compare(w) == 0 {
 		return true
 	}
 

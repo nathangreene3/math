@@ -162,8 +162,8 @@ func ColumnMatrix(v vector.Vector) Matrix {
 	return New(len(v), 1, func(i, j int) float64 { return v[i] })
 }
 
-// CompareTo returns -1, 0, 1 indicating A precedes, is equal to, or follows B.
-func (A Matrix) CompareTo(B Matrix) int {
+// Compare returns -1, 0, 1 indicating A precedes, is equal to, or follows B.
+func (A Matrix) Compare(B Matrix) int {
 	ma, na := A.Dimensions()
 	mb, nb := B.Dimensions()
 	if ma != mb || na != nb {
@@ -253,7 +253,7 @@ func (A Matrix) Dimensions() (int, int) {
 // Equals returns true if two matrices are equal in dimension and for each
 // entry. Otherwise, it returns false.
 func (A Matrix) Equals(B Matrix) bool {
-	return A.CompareTo(B) == 0
+	return A.Compare(B) == 0
 }
 
 // Join returns a matrix that is the joining of two given matrices.
@@ -691,7 +691,7 @@ func RowMatrix(v vector.Vector) Matrix {
 // Sort A such that the largest leading indices are at the top (index 0 is the
 // top).
 func (A Matrix) Sort() {
-	sort.SliceStable(A, func(i, j int) bool { return 0 < A[i].CompareTo(A[j]) })
+	sort.SliceStable(A, func(i, j int) bool { return 0 < A[i].Compare(A[j]) })
 }
 
 // String returns a formatted string representation of a matrix. TODO: Determine

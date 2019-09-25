@@ -5,7 +5,7 @@ import (
 	"sort"
 )
 
-// Approx returns true if |x-y| <= prec.
+// Approx returns true if |x-y| <= prec, where prec in [0,1].
 func Approx(x, y, prec float64) bool {
 	if prec < 0 || 1 < prec {
 		panic("precision must be on range [0,1]")
@@ -16,11 +16,10 @@ func Approx(x, y, prec float64) bool {
 
 // Base converts a number into its base representation.
 func Base(n, b int) []int {
-	if n < 0 {
+	switch {
+	case n < 0:
 		panic("number must be non-negative")
-	}
-
-	if b < 2 {
+	case b < 2:
 		panic("base must be greater than one")
 	}
 
@@ -39,11 +38,10 @@ func Base(n, b int) []int {
 
 // BasePows returns the powers of base b that sum to a number n.
 func BasePows(n, b int) []int {
-	if n < 0 {
+	switch {
+	case n < 0:
 		panic("number must be non-negative")
-	}
-
-	if b < 2 {
+	case b < 2:
 		panic("base must be greater than one")
 	}
 
@@ -87,7 +85,7 @@ func CoVar(x, y []float64) float64 {
 	}
 
 	var (
-		mx, my = Mean(x), Mean(y)
+		mx, my = Mean(x...), Mean(y...)
 		cv     float64
 	)
 
@@ -105,6 +103,7 @@ func Eratosthenes(n int) []int {
 	}
 
 	pm := make(map[int]struct{})
+	// bm:=bitmask.New(0)
 	for k := 2; k <= n; k++ {
 		pm[k] = struct{}{}
 	}
@@ -240,16 +239,19 @@ func LCM(a, b int) int {
 	return a1
 }
 
-// Max returns the maximum of x and y.
-func Max(x, y float64) float64 {
-	if x < y {
-		return y
+// Max returns the maximum of a list of values.
+func Max(xs ...float64) float64 {
+	max := xs[0]
+	for _, x := range xs[1:] {
+		if max < x {
+			max = x
+		}
 	}
 
-	return x
+	return max
 }
 
-// MaxInt returns the maximum of x and y.
+// MaxInt returns the maximum of a list of values.
 func MaxInt(xs ...int) int {
 	max := xs[0]
 	for _, x := range xs[1:] {
@@ -262,20 +264,23 @@ func MaxInt(xs ...int) int {
 }
 
 // Mean returns the Mean (or average) of a list of values.
-func Mean(x []float64) float64 {
-	return Sum(x) / float64(len(x))
+func Mean(xs ...float64) float64 {
+	return Sum(xs...) / float64(len(xs))
 }
 
-// Min returns the minimum of x and y.
-func Min(x, y float64) float64 {
-	if x < y {
-		return x
+// Min returns the minimum of a list of values.
+func Min(xs ...float64) float64 {
+	min := xs[0]
+	for _, x := range xs[1:] {
+		if x < min {
+			min = x
+		}
 	}
 
-	return y
+	return min
 }
 
-// MinInt returns the minimum of x and y.
+// MinInt returns the minimum of a list of values.
 func MinInt(xs ...int) int {
 	min := xs[0]
 	for _, x := range xs[1:] {
@@ -339,15 +344,15 @@ func PowInt(a, p int) int {
 }
 
 // StDev returns the standard deviation of a list of values.
-func StDev(x []float64) float64 {
-	return gomath.Sqrt(Var(x))
+func StDev(xs ...float64) float64 {
+	return gomath.Sqrt(Var(xs...))
 }
 
 // Sum returns the sum of a list of values.
-func Sum(x []float64) float64 {
+func Sum(xs ...float64) float64 {
 	var s float64
-	for _, xi := range x {
-		s += xi
+	for _, x := range xs {
+		s += x
 	}
 
 	return s
@@ -374,16 +379,16 @@ func Totient(n int) int {
 }
 
 // Var returns the Var of a list of values.
-func Var(x []float64) float64 {
+func Var(xs ...float64) float64 {
 	var (
-		m    = Mean(x)
+		m    = Mean(xs...)
 		v, t float64
 	)
 
-	for _, xi := range x {
-		t = xi - m
+	for _, x := range xs {
+		t = x - m
 		v += t * t
 	}
 
-	return v / float64(len(x)-1)
+	return v / float64(len(xs)-1)
 }
