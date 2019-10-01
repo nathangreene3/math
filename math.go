@@ -2,7 +2,10 @@ package math
 
 import (
 	gomath "math"
+	"math/big"
 	"sort"
+
+	"github.com/nathangreene3/math/bitmask"
 )
 
 // Approx returns true if |x-y| <= prec, where prec in [0,1].
@@ -98,20 +101,23 @@ func CoVar(x, y []float64) float64 {
 
 // Eratosthenes returns a list of prime integers up to and including n.
 func Eratosthenes(n int) []int {
+	// TODO: Finish after bitmask is done.
 	if n < 2 {
 		return nil
 	}
 
 	pm := make(map[int]struct{})
-	// bm:=bitmask.New(0)
+	bm := bitmask.New(big.NewInt(0))
 	for k := 2; k <= n; k++ {
 		pm[k] = struct{}{}
+		bm.Set(big.NewInt(int64(k)))
 	}
 
 	for p := 2; p <= n; p++ {
 		for k := range pm {
 			if p != k && k/p*p == k {
 				delete(pm, k)
+				bm.Clear(big.NewInt(int64(k)))
 			}
 		}
 	}

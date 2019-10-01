@@ -1,17 +1,19 @@
 package group
 
 import (
+	"math/big"
+
 	"github.com/nathangreene3/math/bitmask"
 	"github.com/nathangreene3/math/set"
 )
 
 // Permutation is an ordering of [0, 1, ..., n-1]. A complete set of all permutations of a given length n are denoted as Sn.
-type Permutation []int
+type Permutation []uint
 
 // New returns [0, 1, ..., n-1].
-func New(n int) Permutation {
+func New(n uint) Permutation {
 	a := make(Permutation, 0, n)
-	for i := 0; i < n; i++ {
+	for i := uint(0); i < n; i++ {
 		a = append(a, i)
 	}
 
@@ -19,22 +21,24 @@ func New(n int) Permutation {
 }
 
 // Identity returns [0, 1, ..., n-1].
-func Identity(n int) Permutation {
+func Identity(n uint) Permutation {
 	return New(n)
 }
 
 // Cayley returns a Cayley table, a matrix consisting of each pair of permutations multiplied. The (i,j)th entry is the as[i]*as[j] result.
-func Cayley(a ...Permutation) [][]Permutation {
+func Cayley(ps ...Permutation) [][]Permutation {
 	var (
-		n     = len(a)
+		n     = len(ps)
 		table = make([][]Permutation, 0, n)
 	)
 
-	for i, ai := range a {
-		table = append(table, make([]Permutation, 0, n))
-		for _, aj := range a {
-			table[i] = append(table[i], ai.Multiply(aj))
+	for _, p := range ps {
+		permutations := make([]Permutation, 0, n)
+		for _, q := range ps {
+			permutations = append(permutations, p.Multiply(q))
 		}
+
+		table = append(table, permutations)
 	}
 
 	return table
@@ -91,7 +95,7 @@ func (a *Permutation) Generate() set.Set {
 		panic("not a permutation")
 	}
 
-	e := Identity(len(*a))
+	e := Identity(uint(len(*a)))
 	b := a.Copy()
 	S := set.New(&b)
 	for ; b.Compare(&e) != 0; S.Insert(&b) {
@@ -104,18 +108,18 @@ func (a *Permutation) Generate() set.Set {
 // isPermutation returns true if a permutation is an ordering of [0, 1, ..., n-1].
 func (a *Permutation) isPermutation() bool {
 	var (
-		n  = len(*a)
-		bm = bitmask.New(0)
+		n  = uint(len(*a))
+		bm = bitmask.New(big.NewInt(0))
 	)
 
 	for _, v := range *a {
 		switch {
 		case v < 0, n <= v:
 			return false
-		case bm.IsSet(1 << uint64(v)):
+		case bm.IsSet(big.NewInt(int64(1 << v))):
 			return false
 		default:
-			bm.Set(1 << uint64(v))
+			bm.Set(big.NewInt(int64(1 << v)))
 		}
 	}
 
@@ -178,7 +182,7 @@ func (a *Permutation) Pow(p int) Permutation {
 	}
 
 	// Yacas' method
-	b := Identity(len(*a))
+	b := Identity(uint(len(*a)))
 	c := a.Copy()
 	for ; 0 < p; p >>= 1 {
 		if p&1 == 1 {
