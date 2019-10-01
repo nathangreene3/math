@@ -18,6 +18,12 @@ import (
 // Vector is an ordered n-tuple.
 type Vector []float64
 
+type vector struct {
+	v    []float64
+	dims int
+	mag  float64
+}
+
 // Generator is a function defining the i-th entry of a vector.
 type Generator func(i int) float64
 
@@ -27,18 +33,19 @@ type Generator func(i int) float64
 
 // New generates a vector of dimension n with entries defined by a generating
 // function f.
-func New(n int, f Generator) Vector {
+func New(n int, f Generator) *Vector {
 	v := make(Vector, 0, n)
 	for i := 0; i < n; i++ {
 		v = append(v, f(i))
 	}
 
-	return v
+	return &v
 }
 
 // Zero returns the zero vector of n dimensions.
-func Zero(n int) Vector {
-	return make(Vector, n)
+func Zero(n int) *Vector {
+	v := make(Vector, n)
+	return &v
 }
 
 // ------------------------------------------------------------------------------
@@ -47,14 +54,14 @@ func Zero(n int) Vector {
 
 // Approx returns true if v approximates w for a given precision on the range
 // [0,1].
-func (v Vector) Approx(w Vector, prec float64) bool {
-	n := len(v)
-	if n != len(w) {
+func (v *Vector) Approx(w *Vector, prec float64) bool {
+	n := len(*v)
+	if n != len(*w) {
 		return false
 	}
 
 	for i := 0; i < n; i++ {
-		if !math.Approx(v[i], w[i], prec) {
+		if !math.Approx((*v)[i], (*w)[i], prec) {
 			return false
 		}
 	}
@@ -63,42 +70,44 @@ func (v Vector) Approx(w Vector, prec float64) bool {
 }
 
 // Add returns v+w.
-func Add(v, w Vector) Vector {
-	n := len(v)
-	if n != len(w) {
+func Add(v, w *Vector) *Vector {
+	n := len(*v)
+	if n != len(*w) {
 		panic("dimension mismatch")
 	}
 
-	return New(n, func(i int) float64 { return v[i] + w[i] })
+	return New(n, func(i int) float64 { return (*v)[i] + (*w)[i] })
 }
 
 // Add w to v.
-func (v Vector) Add(w Vector) {
-	n := len(v)
-	if n != len(w) {
+func (v *Vector) Add(w *Vector) *Vector {
+	n := len(*v)
+	if n != len(*w) {
 		panic("dimension mismatch")
 	}
 
 	for i := 0; i < n; i++ {
-		v[i] += w[i]
+		(*v)[i] += (*w)[i]
 	}
+
+	return v
 }
 
 // Angle returns the Angle between two vectors.
-func (v Vector) Angle(w Vector) float64 {
+func (v *Vector) Angle(w *Vector) float64 {
 	return gomath.Acos(v.Unit().Dot(w.Unit()))
 }
 
 // Compare returns -1, 0, or 1 indicating v precedes, is equal to, or follows
 // w. Vectors v and w may be of different dimensions.
-func (v Vector) Compare(w Vector) int {
-	m, n := len(v), len(w)
+func (v *Vector) Compare(w *Vector) int {
+	m, n := len(*v), len(*w)
 	min := math.MinInt(m, n)
 	for i := 0; i < min; i++ {
 		switch {
-		case v[i] < w[i]:
+		case (*v)[i] < (*w)[i]:
 			return -1
-		case w[i] < v[i]:
+		case (*w)[i] < (*v)[i]:
 			return 1
 		}
 	}
@@ -114,63 +123,63 @@ func (v Vector) Compare(w Vector) int {
 }
 
 // Complimentary returns -v.
-func (v Vector) Complimentary() Vector {
+func (v *Vector) Complimentary() *Vector {
 	return Multiply(-1, v)
 }
 
 // Copy a vector.
-func (v Vector) Copy() Vector {
-	w := make(Vector, len(v))
-	copy(w, v)
-	return w
+func (v *Vector) Copy() *Vector {
+	w := make(Vector, len(*v))
+	copy(w, *v)
+	return &w
 }
 
 // Dimensions returns len(v).
-func (v Vector) Dimensions() int {
-	return len(v)
+func (v *Vector) Dimensions() int {
+	return len(*v)
 }
 
 // Divide returns v/a.
-func Divide(a float64, v Vector) Vector {
-	return New(len(v), func(i int) float64 { return v[i] / a })
+func Divide(a float64, v *Vector) *Vector {
+	return New(len(*v), func(i int) float64 { return (*v)[i] / a })
 }
 
 // Divide each value by a.
-func (v Vector) Divide(a float64) {
-	for i := range v {
-		v[i] /= a
+func (v *Vector) Divide(a float64) {
+	for i := range *v {
+		(*v)[i] /= a
 	}
 }
 
 // Dot returns v dot w.
-func (v Vector) Dot(w Vector) float64 {
-	n := len(w)
-	if n != len(v) {
+func (v *Vector) Dot(w *Vector) float64 {
+	n := len(*w)
+	if n != len(*v) {
 		panic("dimension mismatch")
 	}
 
 	var s float64
 	for i := 0; i < n; i++ {
-		s += w[i] * v[i]
+		s += (*w)[i] * (*v)[i]
 	}
 
 	return s
 }
 
 // Equal returns the comparison v = w.
-func (v Vector) Equal(w Vector) bool {
+func (v *Vector) Equal(w *Vector) bool {
 	return v.Compare(w) == 0
 }
 
 // IsMultipleOf returns true if either v or w is a multiple of the other
 // (v = aw for some real a).
-func (v Vector) IsMultipleOf(w Vector) bool {
+func (v *Vector) IsMultipleOf(w *Vector) bool {
 	if v.Compare(w) == 0 {
 		return true
 	}
 
-	n := len(v)
-	if n != len(w) {
+	n := len(*v)
+	if n != len(*w) {
 		return false
 	}
 
@@ -182,20 +191,20 @@ func (v Vector) IsMultipleOf(w Vector) bool {
 	var r float64 // Ratio of each non-zero dimension in v and w
 	for i := 0; i < n; i++ {
 		switch {
-		case v[i] != 0:
+		case (*v)[i] != 0:
 			switch {
-			case w[i] != 0:
+			case (*w)[i] != 0:
 				if 0 < r {
-					if r != v[i]/w[i] {
+					if r != (*v)[i]/(*w)[i] {
 						return false // Ratios not consistent
 					}
 				} else {
-					r = v[i] / w[i] // Ratio should be set only once
+					r = (*v)[i] / (*w)[i] // Ratio should be set only once
 				}
 			default:
 				return false // v[i] != 0, but w[i] == 0
 			}
-		case w[i] != 0:
+		case (*w)[i] != 0:
 			return false // v[i] == 0, but w[i] != 0
 		}
 	}
@@ -204,49 +213,49 @@ func (v Vector) IsMultipleOf(w Vector) bool {
 }
 
 // Length returns |v|. This is NOT len(v).
-func (v Vector) Length() float64 {
+func (v *Vector) Length() float64 {
 	return gomath.Sqrt(v.Dot(v))
 }
 
 // Multiply returns av.
-func Multiply(a float64, v Vector) Vector {
-	return New(len(v), func(i int) float64 { return a * v[i] })
+func Multiply(a float64, v *Vector) *Vector {
+	return New(len(*v), func(i int) float64 { return a * (*v)[i] })
 }
 
 // Multiply each value by a.
-func (v Vector) Multiply(a float64) {
-	for i := range v {
-		v[i] *= a
+func (v *Vector) Multiply(a float64) {
+	for i := range *v {
+		(*v)[i] *= a
 	}
 }
 
 // String returns a string-representation of a vector.
-func (v Vector) String() string {
-	return fmt.Sprintf("%0.3f", v) // TODO: Find the fastest way to stringify slices.
+func (v *Vector) String() string {
+	return fmt.Sprintf("%0.3f", *v) // TODO: Find the fastest way to stringify slices.
 }
 
 // Subtract returns v-w.
-func Subtract(v, w Vector) Vector {
-	n := len(v)
-	if n != len(w) {
+func Subtract(v, w *Vector) *Vector {
+	n := len(*v)
+	if n != len(*w) {
 		panic("dimension mismatch")
 	}
 
-	return New(n, func(i int) float64 { return v[i] - w[i] })
+	return New(n, func(i int) float64 { return (*v)[i] - (*w)[i] })
 }
 
 // Subtract w from v.
-func (v Vector) Subtract(w Vector) {
+func (v *Vector) Subtract(w *Vector) {
 	v.Add(Multiply(-1, w))
 }
 
 // Projection returns the projection of w onto v (proj_v(w)).
-func (v Vector) Projection(w Vector) Vector {
+func (v *Vector) Projection(w *Vector) *Vector {
 	r := v.Length()
 	return Multiply(w.Dot(v)/(r*r), v)
 }
 
 // Unit returns v/|v|, a vector of length one pointing in the direction of v.
-func (v Vector) Unit() Vector {
+func (v *Vector) Unit() *Vector {
 	return Divide(v.Length(), v)
 }

@@ -17,7 +17,7 @@ import (
 // ------------------------------------------------------------------------------
 
 // Matrix is a set of vectors.
-type Matrix []vector.Vector
+type Matrix []*vector.Vector
 
 // Generator is a function defining the (i,j)th entry of a matrix.
 type Generator func(i, j int) float64
