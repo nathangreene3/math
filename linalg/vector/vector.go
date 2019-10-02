@@ -16,10 +16,11 @@ import (
 // ------------------------------------------------------------------------------
 
 // Vector is an ordered n-tuple.
-type Vector []float64
+// type Vector []float64
 
-type vector struct {
-	v    []float64
+// Vector ...
+type Vector struct {
+	vals []float64
 	dims int
 	mag  float64
 }
@@ -34,18 +35,20 @@ type Generator func(i int) float64
 // New generates a vector of dimension n with entries defined by a generating
 // function f.
 func New(n int, f Generator) *Vector {
-	v := make(Vector, 0, n)
+	v := Vector{vals: make([]float64, 0, n)}
+
 	for i := 0; i < n; i++ {
-		v = append(v, f(i))
+		v.vals = append(v.vals, f(i))
+		v.dims++
 	}
 
+	// TODO: v.mag
 	return &v
 }
 
 // Zero returns the zero vector of n dimensions.
 func Zero(n int) *Vector {
-	v := make(Vector, n)
-	return &v
+	return New(n, func(i int) float64 { return 0 })
 }
 
 // ------------------------------------------------------------------------------
@@ -169,6 +172,11 @@ func (v *Vector) Dot(w *Vector) float64 {
 // Equal returns the comparison v = w.
 func (v *Vector) Equal(w *Vector) bool {
 	return v.Compare(w) == 0
+}
+
+// Get returns v[i].
+func (v *Vector) Get(i int) float64 {
+	return (*v)[i]
 }
 
 // IsMultipleOf returns true if either v or w is a multiple of the other
