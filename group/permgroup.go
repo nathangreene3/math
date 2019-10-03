@@ -45,11 +45,11 @@ func Cayley(ps ...Permutation) [][]Permutation {
 }
 
 // Compare returns the comparison of a permutation to another permutation.
-func (a *Permutation) Compare(b set.Comparable) int {
-	n := len(*a)
-	c := b.(*Permutation)
+func (a Permutation) Compare(b set.Comparable) int {
+	n := len(a)
+	c := b.(Permutation)
 	switch {
-	case n != len(*c):
+	case n != len(c):
 		panic("dimension mismatch")
 	case !a.isPermutation(), !c.isPermutation():
 		panic("not a permutation")
@@ -57,9 +57,9 @@ func (a *Permutation) Compare(b set.Comparable) int {
 
 	for i := 0; i < n; i++ {
 		switch {
-		case (*a)[i] < (*c)[i]:
+		case a[i] < c[i]:
 			return -1
-		case (*c)[i] < (*a)[i]:
+		case c[i] < a[i]:
 			return 1
 		}
 	}
@@ -68,15 +68,15 @@ func (a *Permutation) Compare(b set.Comparable) int {
 }
 
 // Copy a permutation.
-func (a *Permutation) Copy() Permutation {
-	b := make(Permutation, len(*a))
-	copy(b, *a)
+func (a Permutation) Copy() Permutation {
+	b := make(Permutation, len(a))
+	copy(b, a)
 	return b
 }
 
 // Equal returns true if two permutations are Equal in each indexed value.
-func (a *Permutation) Equal(b Permutation) bool {
-	return a.Compare(&b) == 0
+func (a Permutation) Equal(b Permutation) bool {
+	return a.Compare(b) == 0
 }
 
 // generate TODO: generate entire (sub) group.
@@ -90,29 +90,29 @@ func generate(a ...Permutation) set.Set {
 }
 
 // Generate returns the subset <a> of Sn.
-func (a *Permutation) Generate() set.Set {
+func (a Permutation) Generate() set.Set {
 	if !a.isPermutation() {
 		panic("not a permutation")
 	}
 
-	e := Identity(uint(len(*a)))
+	e := Identity(uint(len(a)))
 	b := a.Copy()
-	S := set.New(&b)
-	for ; b.Compare(&e) != 0; S.Insert(&b) {
-		b = b.Multiply(*a)
+	S := set.New(b)
+	for ; b.Compare(e) != 0; S.Insert(b) {
+		b = b.Multiply(a)
 	}
 
 	return S
 }
 
 // isPermutation returns true if a permutation is an ordering of [0, 1, ..., n-1].
-func (a *Permutation) isPermutation() bool {
+func (a Permutation) isPermutation() bool {
 	var (
-		n  = uint(len(*a))
+		n  = uint(len(a))
 		bm = bitmask.New(big.NewInt(0))
 	)
 
-	for _, v := range *a {
+	for _, v := range a {
 		switch {
 		case v < 0, n <= v:
 			return false
@@ -142,8 +142,8 @@ func Multiply(a ...Permutation) Permutation {
 }
 
 // Multiply returns ab.
-func (a *Permutation) Multiply(b Permutation) Permutation {
-	n := len(*a)
+func (a Permutation) Multiply(b Permutation) Permutation {
+	n := len(a)
 	if n != len(b) {
 		panic("dimension mismatch")
 	}
@@ -154,25 +154,25 @@ func (a *Permutation) Multiply(b Permutation) Permutation {
 
 	ab := make(Permutation, 0, n)
 	for i := 0; i < n; i++ {
-		ab = append(ab, (*a)[b[i]])
+		ab = append(ab, a[b[i]])
 	}
 
 	return ab
 }
 
 // Order returns the number of multiplications of a with itself until it becomes [0, 1, ..., n-1].
-func (a *Permutation) Order() int {
-	b := a.Multiply(*a)
+func (a Permutation) Order() int {
+	b := a.Multiply(a)
 	n := 1
 	for ; b.Compare(a) != 0; n++ {
-		b = b.Multiply(*a)
+		b = b.Multiply(a)
 	}
 
 	return n
 }
 
 // Pow returns a^p.
-func (a *Permutation) Pow(p int) Permutation {
+func (a Permutation) Pow(p int) Permutation {
 	if !a.isPermutation() {
 		panic("not a permutation")
 	}
@@ -182,7 +182,7 @@ func (a *Permutation) Pow(p int) Permutation {
 	}
 
 	// Yacas' method
-	b := Identity(uint(len(*a)))
+	b := Identity(uint(len(a)))
 	c := a.Copy()
 	for ; 0 < p; p >>= 1 {
 		if p&1 == 1 {

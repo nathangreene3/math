@@ -11,10 +11,6 @@ func TestIsPermutation(t *testing.T) {
 			a:   New(5),
 			exp: true,
 		},
-		{
-			a:   New(5),
-			exp: true,
-		},
 	}
 
 	for _, test := range tests {
