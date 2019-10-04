@@ -126,7 +126,7 @@ func (f *Polynomial) Evaluate(x float64) float64 {
 	return y
 }
 
-// integrate returns the antiderivative of f. TODO
+// integrate returns the antiderivative of f. f0 will be zero and should be set to it's appropriate value by the caller if possible. TODO
 func (f *Polynomial) integrate() Polynomial {
 	g := make(Polynomial, 1, len(*f)+1)
 	for i := range *f {

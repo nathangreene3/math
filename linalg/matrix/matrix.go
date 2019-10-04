@@ -58,6 +58,29 @@ func Identity(m, n int) Matrix {
 	return New(m, n, f)
 }
 
+// List several vectors into a matrix.
+func List(vectors ...vector.Vector) Matrix {
+	var (
+		n = len(vectors)
+		A = make(Matrix, 0, n)
+	)
+
+	if n == 0 {
+		return A
+	}
+
+	dims := len(vectors[0])
+	for _, v := range vectors {
+		if dims != len(v) {
+			panic("invalid dimension")
+		}
+
+		A = append(A, v)
+	}
+
+	return A
+}
+
 // ------------------------------------------------------------------------------
 // OPERATIONS ON MATRICES
 // ------------------------------------------------------------------------------
