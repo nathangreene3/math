@@ -36,6 +36,11 @@ func New(n int, f Generator) Vector {
 	return v
 }
 
+// List values as a vector.
+func List(values ...float64) Vector {
+	return append(make(Vector, 0, len(values)), values...)
+}
+
 // Zero returns the zero vector of n dimensions.
 func Zero(n int) Vector {
 	return make(Vector, n)

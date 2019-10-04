@@ -3,7 +3,6 @@ package polynomial
 import (
 	"github.com/nathangreene3/math"
 	"github.com/nathangreene3/math/linalg/matrix"
-	"github.com/nathangreene3/math/linalg/vector"
 )
 
 // A Polynomial is an ordered set of weights f = [a0, a1, ..., an-1] such that f(x) = a0 + a1*x + ... + an-1 x^(n-1) for any real x.
@@ -178,25 +177,25 @@ func (f *Polynomial) pow(n int) Polynomial {
 		return f.Copy()
 	}
 
-	// Given f = [a0 a1 ... an-1], f^n = F^(n-1)*f, where
+	// Given f = [a0 a1 ... an-1], f^n = F^(n-1)
 	// F = [ a0   a0   ...   a0 ]
 	//     [ a1   a1   ...   a1 ]
 	//     [ ...  ...  ...  ... ]
 	//     [ an-1 an-1 ... an-1 ]
-	// The coefficients of g = f^n are defined by summing the terms off the
-	// secondary diagonals.
 	var (
 		dims = len(*f)
-		G    = matrix.Multiply(matrix.Pow(matrix.New(dims, dims, func(i, j int) float64 { return (*f)[i] }), n-1), matrix.ColumnMatrix(vector.Vector(*f)))
-		g    = make(Polynomial, n*dims)
-		k    int
+		F    = matrix.Pow(matrix.New(dims, dims, func(i, j int) float64 { return (*f)[i] }), dims-1)
 	)
 
-	for i, r := range G {
-		k = i
-		for _, v := range r {
-			g[k] += v
-			k++
+	for i, v := range *f {
+		F.MultiplyColumn(i, v)
+	}
+
+	// Each dimension g(k) = Sum F(i,j) for all k = i+j.
+	g := make(Polynomial, n*dims)
+	for i, r := range F {
+		for j, v := range r {
+			g[i+j] += v
 		}
 	}
 
@@ -227,8 +226,6 @@ func (f *Polynomial) Subtract(g Polynomial) {
 
 // Trim removes the higher powers that have zero valued coefficients. Only removes from the right.
 func (f *Polynomial) Trim() Polynomial {
-	// [1,2,3,0,0] --> [1,2,3]
-
 	n := len(*f)
 	if n == 0 {
 		return *f
@@ -237,5 +234,5 @@ func (f *Polynomial) Trim() Polynomial {
 	for ; 0 < n && (*f)[n-1] == 0; n-- {
 	}
 
-	return New((*f)[:n]...)
+	return (*f)[:n]
 }

@@ -241,8 +241,8 @@ func (A Matrix) Determinant() float64 {
 // matrix.
 func (A Matrix) Dimensions() (int, int) {
 	m, n := len(A), len(A[0])
-	for i := range A {
-		if n != len(A[i]) {
+	for _, r := range A {
+		if n != len(r) {
 			panic("inconsistent matrix dimensions")
 		}
 	}
@@ -477,8 +477,8 @@ func ScalarMultiply(a float64, A Matrix) Matrix {
 
 // ScalarMultiply A by a.
 func (A Matrix) ScalarMultiply(a float64) {
-	for i := range A {
-		A[i].Multiply(a)
+	for _, r := range A {
+		r.Multiply(a)
 	}
 }
 
@@ -691,7 +691,7 @@ func RowMatrix(v vector.Vector) Matrix {
 // Sort A such that the largest leading indices are at the top (index 0 is the
 // top).
 func (A Matrix) Sort() {
-	sort.SliceStable(A, func(i, j int) bool { return 0 < A[i].Compare(A[j]) })
+	sort.Slice(A, func(i, j int) bool { return 0 < A[i].Compare(A[j]) })
 }
 
 // String returns a formatted string representation of a matrix. TODO: Determine
@@ -720,8 +720,29 @@ func (A Matrix) tildeA(i, j int) Matrix {
 	return A.RemoveRow(i).RemoveColumn(j)
 }
 
-// Transpose returns the transpose of a matrix.
-func Transpose(A Matrix) Matrix {
+// Trace the main or secondary diagonal.
+func (A Matrix) Trace(mainDiagonal bool) float64 {
+	m, n := A.Dimensions()
+	if m != n {
+		panic("invalid dimensions")
+	}
+
+	var s float64
+	if mainDiagonal {
+		for i, r := range A {
+			s += r[i]
+		}
+	} else {
+		for i, r := range A {
+			s += r[n-i-1]
+		}
+	}
+
+	return s
+}
+
+// Transpose a matrix.
+func (A Matrix) Transpose() Matrix {
 	m, n := A.Dimensions()
 	return New(n, m, func(i, j int) float64 { return A[j][i] })
 }

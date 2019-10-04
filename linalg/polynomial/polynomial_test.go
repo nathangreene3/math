@@ -70,6 +70,26 @@ func TestDifferentiate(t *testing.T) {
 	}
 }
 
+func TestPow(t *testing.T) {
+	tests := []struct {
+		f, exp, rec Polynomial
+		n           int
+	}{
+		{
+			f:   New(1, 1),
+			n:   2,
+			exp: New(1, 2, 1),
+		},
+	}
+
+	for _, test := range tests {
+		test.rec = test.f.pow(test.n)
+		if !test.exp.Equal(test.rec) {
+			t.Fatalf("\nexpected %v\nreceived %v\n", test.exp, test.rec)
+		}
+	}
+}
+
 func TestTrim(t *testing.T) {
 	tests := []struct {
 		f, exp, rec Polynomial
