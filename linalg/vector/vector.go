@@ -149,14 +149,14 @@ func (v Vector) Divide(a float64) {
 
 // Dot returns v dot w.
 func (v Vector) Dot(w Vector) float64 {
-	n := len(w)
-	if n != len(v) {
+	n := len(v)
+	if n != len(w) {
 		panic("dimension mismatch")
 	}
 
 	var s float64
 	for i := 0; i < n; i++ {
-		s += w[i] * v[i]
+		s += v[i] * w[i]
 	}
 
 	return s
