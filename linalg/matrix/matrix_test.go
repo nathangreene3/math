@@ -15,9 +15,11 @@ func TestMultiply(t *testing.T) {
 			if a+b == 0 {
 				c = 0
 			}
+
 			c++
 			return c
 		}
+
 		A   = New(2, 2, f)
 		B   = New(2, 3, f)
 		C   = New(3, 1, f)
@@ -35,6 +37,7 @@ func TestMultiply(t *testing.T) {
 		vector.Vector{0, 4, 3, 7},
 		vector.Vector{3, 2, 0, 2},
 	}
+
 	B = ColumnMatrix(vector.Vector{3, 9, 8, 2})
 	Exp = ColumnMatrix(vector.Vector{68, 74, 31})
 	Ans = A.multiply(B)
@@ -64,7 +67,7 @@ func TestSolve(t *testing.T) {
 		return 4.5
 	})
 	if !x.Equal(y) {
-		t.Fatalf("expected %v, received %v", y, x)
+		t.Fatalf("\nexpected %v, received %v", y, x)
 	}
 
 	// Function converting Celsius to Farenheit
@@ -90,7 +93,7 @@ func TestSolve(t *testing.T) {
 		return 32
 	})
 	if !x.Equal(y) {
-		t.Fatalf("expected %v, received %v", y, x)
+		t.Fatalf("\nexpected %v, received %v", y, x)
 	}
 }
 
@@ -109,7 +112,7 @@ func fibonacci(n int) int {
 
 func TestFibonacci(t *testing.T) {
 	var (
-		n         = 100
+		n         = 78
 		linAlgFib int
 		mathFib   int
 	)
@@ -118,7 +121,7 @@ func TestFibonacci(t *testing.T) {
 		mathFib = math.Fibonacci(i)
 		linAlgFib = fibonacci(i)
 		if mathFib != linAlgFib {
-			t.Fatalf("expected %d\nreceived %d\n", mathFib, linAlgFib)
+			t.Fatalf("\nexpected %d\nreceived %d\n", mathFib, linAlgFib)
 		}
 	}
 }
@@ -147,6 +150,8 @@ func TestPow(t *testing.T) {
 
 func TestPow1(t *testing.T) {
 	var (
+		// [0 1]
+		// [1 1]
 		A      = New(2, 2, func(i, j int) float64 { return float64(i | j) })
 		Apow78 = Pow(A, 78)
 		exp    = Multiply(Apow78, A)
@@ -164,7 +169,7 @@ func TestSumFibs(t *testing.T) {
 		sum           = F77 + F78
 	)
 
-	// if F79 != sum {
-	t.Fatalf("\nexpected %0.0f + %0.0f = %0.0f\nreceived %0.0f\n", F77, F78, F79, sum)
-	// }
+	if F79 != sum {
+		t.Fatalf("\n            %0.0f\n         + %0.0f\n         -------------------\nexpected   %0.0f\nreceived   %0.0f\n", F77, F78, F79, sum)
+	}
 }

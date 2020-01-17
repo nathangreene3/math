@@ -49,6 +49,21 @@ func (S *Set) Contains(value Comparable) (int, bool) {
 	return n, false
 }
 
+// Cardinality returns the number of values in a set.
+func (S *Set) Cardinality() int {
+	return len(*S)
+}
+
+// Copy a set.
+func (S *Set) Copy() Set {
+	T := make(Set)
+	for k, v := range *S {
+		T[k] = v
+	}
+
+	return T
+}
+
 // Disjoint returns a set containing values in A and B, but not in both A and B
 // (AuB-AnB).
 func (S *Set) Disjoint(T Set) Set {
@@ -72,6 +87,22 @@ func (S *Set) Disjoint(T Set) Set {
 	}
 
 	return U
+}
+
+// Equal returns true if A and B each contain the same values. Note that the
+// keys may differ.
+func (S *Set) Equal(T Set) bool {
+	if len(*S) != len(T) {
+		return false
+	}
+
+	for _, v := range *S {
+		if _, ok := T.Contains(v); !ok {
+			return false
+		}
+	}
+
+	return true
 }
 
 // Insert a value into a set. Returns the key. Duplicate values will not be
@@ -149,6 +180,23 @@ func (S *Set) RightDisjoint(T Set) Set {
 	return T.LeftDisjoint(*S)
 }
 
+// Sort returns a sorted set with new keys on the range [0,n).
+func (S *Set) Sort() Set {
+	s := (*S).ToSlice()
+	sort.Slice(s, func(i, j int) bool { return s[i].Compare(s[j]) < 0 })
+	return New(s...)
+}
+
+// ToSlice exports a set to a slice.
+func (S *Set) ToSlice() []Comparable {
+	T := make([]Comparable, 0, len(*S))
+	for _, v := range *S {
+		T = append(T, v)
+	}
+
+	return T
+}
+
 // Union of A and B returns a set containing values in either A or B (AuB). It
 // is synonymous with joining or combining sets.
 func (S *Set) Union(T Set) Set {
@@ -180,52 +228,4 @@ func Union(S ...Set) Set {
 	}
 
 	return T
-}
-
-// Cardinality returns the number of values in a set.
-func (S *Set) Cardinality() int {
-	return len(*S)
-}
-
-// Equal returns true if A and B each contain the same values. Note that the
-// keys may differ.
-func (S *Set) Equal(T Set) bool {
-	if len(*S) != len(T) {
-		return false
-	}
-
-	for _, v := range *S {
-		if _, ok := T.Contains(v); !ok {
-			return false
-		}
-	}
-
-	return true
-}
-
-// Copy a set.
-func (S *Set) Copy() Set {
-	T := make(Set)
-	for k, v := range *S {
-		T[k] = v
-	}
-
-	return T
-}
-
-// ToSlice exports a set to a slice.
-func (S *Set) ToSlice() []Comparable {
-	T := make([]Comparable, 0, len(*S))
-	for _, v := range *S {
-		T = append(T, v)
-	}
-
-	return T
-}
-
-// Sort returns a sorted set with new keys on the range [0,n).
-func (S *Set) Sort() Set {
-	s := (*S).ToSlice()
-	sort.Slice(s, func(i, j int) bool { return s[i].Compare(s[j]) < 0 })
-	return New(s...)
 }

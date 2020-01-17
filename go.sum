@@ -1,2 +1,4 @@
 github.com/nathangreene3/table v0.0.0-20190920025320-afc9626595eb h1:WVv3NMzgak2xhydJRMOtKFyRyu7AYro0NIkAtzdX/tU=
 github.com/nathangreene3/table v0.0.0-20190920025320-afc9626595eb/go.mod h1:/AKC6nWqJhoSJqVOclaDdWgJell3ezSF9AP0zET9Txs=
+golang.org/dl v0.0.0-20200113210548-1b9ab2716afa h1:THjmSh4nVlA08HdbHWQMiaQrk/FgZAS9uA124+8g/1E=
+golang.org/dl v0.0.0-20200113210548-1b9ab2716afa/go.mod h1:IUMfjQLJQd4UTqG1Z90tenwKoCX93Gn3MAQJMOSBsDQ=

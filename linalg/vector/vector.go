@@ -18,7 +18,7 @@ import (
 // Vector is an ordered n-tuple.
 type Vector []float64
 
-// Generator is a function defining the i-th entry of a vector.
+// Generator is a function defining the ith entry of a vector.
 type Generator func(i int) float64
 
 // ------------------------------------------------------------------------------
@@ -208,8 +208,8 @@ func (v Vector) IsMultipleOf(w Vector) bool {
 	return true
 }
 
-// Length returns |v|. This is NOT len(v).
-func (v Vector) Length() float64 {
+// Magnitude returns |v|.
+func (v Vector) Magnitude() float64 {
 	return gomath.Sqrt(v.Dot(v))
 }
 
@@ -223,6 +223,12 @@ func (v Vector) Multiply(a float64) {
 	for i := range v {
 		v[i] *= a
 	}
+}
+
+// Projection returns the projection of w onto v (proj_v(w)).
+func (v Vector) Projection(w Vector) Vector {
+	r := v.Magnitude()
+	return Multiply(w.Dot(v)/(r*r), v)
 }
 
 // String returns a string-representation of a vector.
@@ -245,13 +251,7 @@ func (v Vector) Subtract(w Vector) {
 	v.Add(Multiply(-1, w))
 }
 
-// Projection returns the projection of w onto v (proj_v(w)).
-func (v Vector) Projection(w Vector) Vector {
-	r := v.Length()
-	return Multiply(w.Dot(v)/(r*r), v)
-}
-
 // Unit returns v/|v|, a vector of length one pointing in the direction of v.
 func (v Vector) Unit() Vector {
-	return Divide(v.Length(), v)
+	return Divide(v.Magnitude(), v)
 }

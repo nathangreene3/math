@@ -44,8 +44,6 @@ func Empty(m, n int) Matrix {
 
 // Identity returns the m-by-n identity matrix.
 func Identity(m, n int) Matrix {
-	// TODO: Determine if this should this panic when m,n = 0.
-
 	// Note: this generating function is called the Kronecker delta
 	// and is typically denoted as d(i,j).
 	f := func(i, j int) float64 {
@@ -377,10 +375,9 @@ func Multiply(As ...Matrix) Matrix {
 	}
 
 	var (
-		dims    = make([]int, 0, n+1) // Matrix As[i] has dimension dims[i]xdims[i+1], for 0 <= i < n
-		cache   = make([][]int, 0, n)
-		order   = make([][]int, 0, n)
-		j, cost int
+		dims  = make([]int, 0, n+1) // Matrix As[i] has dimension dims[i]xdims[i+1], for 0 <= i < n
+		cache = make([][]int, 0, n)
+		order = make([][]int, 0, n)
 	)
 
 	for i := 0; i < n; i++ {
@@ -392,10 +389,10 @@ func Multiply(As ...Matrix) Matrix {
 	dims = append(dims, len(As[n-1][0]))
 	for h := 1; h < n; h++ {
 		for i := 0; i < n-h; i++ {
-			j = i + h
+			j := i + h
 			cache[i][j] = gomath.MaxInt64
 			for k := i; k < j; k++ {
-				cost = cache[i][k] + cache[k+1][j] + dims[i]*dims[k+1]*dims[j+1]
+				cost := cache[i][k] + cache[k+1][j] + dims[i]*dims[k+1]*dims[j+1]
 				if cost < cache[i][j] {
 					cache[i][j] = cost
 					order[i][j] = k
@@ -616,8 +613,8 @@ func (A Matrix) Solve(y vector.Vector) vector.Vector {
 	}
 
 	for i, b := range B {
-		if b[i] != 0 {
-			b.Divide(b[i])
+		if x := b[i]; x != 0 {
+			b.Divide(x)
 		}
 	}
 
@@ -654,8 +651,8 @@ func (A Matrix) Inverse() Matrix {
 	}
 
 	for i, b := range B {
-		if b[i] != 0 {
-			b.Divide(b[i])
+		if x := b[i]; x != 0 {
+			b.Divide(x)
 		}
 	}
 

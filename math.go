@@ -26,14 +26,11 @@ func Base(n, b int) []int {
 		panic("base must be greater than one")
 	}
 
-	var (
-		remainders = make([]int, 0, 64)
-		d          int
-	)
-
-	for ; 0 < n; n = d {
-		d = n / b
+	remainders := make([]int, 0, 64)
+	for 0 < n {
+		d := n / b
 		remainders = append(remainders, n-d*b)
+		n = d
 	}
 
 	return remainders
@@ -53,13 +50,13 @@ func BasePows(n, b int) []int {
 		pows = append(pows, bp)
 	}
 
-	var c int // Number of times each power contributes to n
 	for i := len(pows) - 1; 0 <= i; i-- {
 		if n < pows[i] {
 			pows[i] = 0
 			continue
 		}
 
+		var c int // Number of times each power contributes to n
 		for c = 0; pows[i] <= n; c++ {
 			n -= pows[i]
 		}
@@ -188,15 +185,24 @@ func Factorial(n int) int {
 	return f
 }
 
-// Fibonacci returns the nth Fibonacci term, where the 0th and 1st terms are 1
-// and the nth term is the sum of the previous two terms.
+// Fibonacci returns the nth Fibonacci value.
 func Fibonacci(n int) int {
-	a0, a1 := 1, 1
-	for ; 1 < n; n-- {
-		a0, a1 = a1, a0+a1
-	}
+	return Lucas(1, 1, n)
+}
 
-	return a1
+// Lucas returns the nth value in a Lucas sequence given seeds a0 and a1.
+func Lucas(a0, a1, n int) int {
+	switch {
+	case n < 0:
+		panic("index out of range")
+	case n == 0:
+		return a0
+	default:
+		for ; 1 < n; n-- {
+			a0, a1 = a1, a0+a1
+		}
+		return a1
+	}
 }
 
 // GCD returns the largest divisor of both a and b. If GCD(a,b) == 1, then a and
@@ -248,9 +254,11 @@ func LCM(a, b int) int {
 // Max returns the maximum of a list of values.
 func Max(xs ...float64) float64 {
 	max := xs[0]
-	for _, x := range xs[1:] {
-		if max < x {
-			max = x
+	if 0 < len(xs) {
+		for _, x := range xs[1:] {
+			if max < x {
+				max = x
+			}
 		}
 	}
 
@@ -260,9 +268,11 @@ func Max(xs ...float64) float64 {
 // MaxInt returns the maximum of a list of values.
 func MaxInt(xs ...int) int {
 	max := xs[0]
-	for _, x := range xs[1:] {
-		if max < x {
-			max = x
+	if 0 < len(xs) {
+		for _, x := range xs[1:] {
+			if max < x {
+				max = x
+			}
 		}
 	}
 
@@ -277,9 +287,11 @@ func Mean(xs ...float64) float64 {
 // Min returns the minimum of a list of values.
 func Min(xs ...float64) float64 {
 	min := xs[0]
-	for _, x := range xs[1:] {
-		if x < min {
-			min = x
+	if 0 < len(xs) {
+		for _, x := range xs[1:] {
+			if x < min {
+				min = x
+			}
 		}
 	}
 
@@ -288,10 +300,12 @@ func Min(xs ...float64) float64 {
 
 // MinInt returns the minimum of a list of values.
 func MinInt(xs ...int) int {
-	min := xs[0]
-	for _, x := range xs[1:] {
-		if x < min {
-			min = x
+	min := xs[0] // Panics on zero xs
+	if 1 < len(xs) {
+		for _, x := range xs[1:] {
+			if x < min {
+				min = x
+			}
 		}
 	}
 
@@ -375,6 +389,9 @@ func SumInts(xs ...int) int {
 }
 
 // Totient returns phi(n) = n prod(1-1/p) for all primes p such that p|n.
+// Special cases:
+// 	1. n = 1   -->   1
+// 	1. prime n --> n-1
 func Totient(n int) int {
 	phi := 1
 	for p, k := range Factor(n) {
@@ -384,15 +401,15 @@ func Totient(n int) int {
 	return phi
 }
 
-// Var returns the Var of a list of values.
+// Var returns the variance of a list of values.
 func Var(xs ...float64) float64 {
 	var (
-		m    = Mean(xs...)
-		v, t float64
+		m = Mean(xs...)
+		v float64
 	)
 
 	for _, x := range xs {
-		t = x - m
+		t := x - m
 		v += t * t
 	}
 
