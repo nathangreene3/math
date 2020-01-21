@@ -17,6 +17,16 @@ func Approx(x, y, prec float64) bool {
 	return gomath.Abs(x-y) <= prec
 }
 
+// Base10 converts a number n represented in base b to decimal.
+func Base10(n []int, b int) int {
+	var x int
+	for i, v := range n {
+		x += v * PowInt(b, i)
+	}
+
+	return x
+}
+
 // Base converts a number into its base representation.
 func Base(n, b int) []int {
 	switch {
@@ -27,13 +37,13 @@ func Base(n, b int) []int {
 	}
 
 	var (
-		remainders = make([]int, 0, 64)
-		d          int
+		remainders = make([]int, 0)
+		k          int
 	)
 
-	for ; 0 < n; n = d {
-		d = n / b
-		remainders = append(remainders, n-d*b)
+	for ; 0 < n; n = k {
+		k = n / b
+		remainders = append(remainders, n-k*b)
 	}
 
 	return remainders
@@ -53,14 +63,14 @@ func BasePows(n, b int) []int {
 		pows = append(pows, bp)
 	}
 
-	var c int // Number of times each power contributes to n
 	for i := len(pows) - 1; 0 <= i; i-- {
 		if n < pows[i] {
 			pows[i] = 0
 			continue
 		}
 
-		for c = 0; pows[i] <= n; c++ {
+		var c int // Number of times each power contributes to n
+		for ; pows[i] <= n; c++ {
 			n -= pows[i]
 		}
 

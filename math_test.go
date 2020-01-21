@@ -22,35 +22,40 @@ func equalInts(a, b []int) bool {
 
 func TestBase(t *testing.T) {
 	tests := []struct {
-		n, b     int
-		exp, rec []int
+		n0, n1, b int
+		exp, rec  []int
 	}{
 		{
-			n:   15,
+			n0:  15,
 			b:   2,
 			exp: []int{1, 1, 1, 1},
 		},
 		{
-			n:   15,
+			n0:  15,
 			b:   3,
 			exp: []int{0, 2, 1},
 		},
 		{
-			n:   15,
+			n0:  15,
 			b:   10,
 			exp: []int{5, 1},
 		},
 		{
-			n:   42,
+			n0:  42,
 			b:   2,
 			exp: []int{0, 1, 0, 1, 0, 1},
 		},
 	}
 
 	for _, test := range tests {
-		test.rec = Base(test.n, test.b)
+		test.rec = Base(test.n0, test.b)
 		if !equalInts(test.exp, test.rec) {
 			t.Fatalf("expected %v\nreceived %v\n", test.exp, test.rec)
+		}
+
+		test.n1 = Base10(test.rec, test.b)
+		if test.n0 != test.n1 {
+			t.Fatalf("\nexpected %d\nreceived %d\n", test.n0, test.n1)
 		}
 	}
 }
