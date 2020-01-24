@@ -1,6 +1,7 @@
 package math
 
 import (
+	"fmt"
 	gomath "math"
 	"testing"
 )
@@ -190,6 +191,15 @@ func TestFactor(t *testing.T) {
 			}
 		}
 	}
+}
+
+func TestFactors(t *testing.T) {
+	n := 100
+	for k, f := range factors(n) {
+		fmt.Printf("FACTORS OF %d: %v\n", k, f)
+	}
+
+	t.Fatal()
 }
 
 func TestFactorial(t *testing.T) {

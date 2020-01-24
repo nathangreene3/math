@@ -8,6 +8,24 @@ import (
 	"github.com/nathangreene3/math/bitmask"
 )
 
+func factors(n int) map[int](map[int]int) {
+	fs := make(map[int](map[int]int))
+	for i := 2; i < n; i++ {
+		if _, ok := fs[i]; !ok {
+			fs[i] = Factor(i)
+			for p := range fs[i] {
+				pj := p
+				for j := 1; pj < n; j++ {
+					fs[p] = map[int]int{p: j}
+					pj += p
+				}
+			}
+		}
+	}
+
+	return fs
+}
+
 // Approx returns true if |x-y| <= prec, where prec in [0,1].
 func Approx(x, y, prec float64) bool {
 	if prec < 0 || 1 < prec {
@@ -145,7 +163,7 @@ func Eratosthenes(n int) []int {
 // n. That is, for each key-value pair (k,v), k divides n a total of v times.
 // Each key will be a prime divisor, which means k will be at least two. An
 // integer is prime if its only Factor is itself (and 1, which is called the
-// empty prime).
+// empty prime, which will not be included in the map of factors).
 func Factor(n int) map[int]int {
 	if n < 1 {
 		panic("cannot factor non-positive integer")
@@ -233,8 +251,7 @@ func IsPrime(n int) bool {
 		return false // Prevents panic on non-positives and 1 isn't prime anyway
 	}
 
-	_, ok := Factor(n)[n]
-	return ok
+	return len(Factor(n)) == 1
 }
 
 // LCM returns the largest multiple of a and b divisible by a and b.
@@ -282,6 +299,29 @@ func MaxInt(xs ...int) int {
 // Mean returns the Mean (or average) of a list of values.
 func Mean(xs ...float64) float64 {
 	return Sum(xs...) / float64(len(xs))
+}
+
+// Merten ...
+func Merten(n int) {
+	// m := make([]int, n)
+
+}
+
+// merten ...
+func merten(n int) int {
+	f := Factor(n)
+	for _, k := range f {
+		if 0 < k {
+			return 0 // A divisor divides n more than once
+		}
+	}
+
+	switch len(f) % 2 {
+	case 0:
+		return 1 // Even number divisors
+	default:
+		return -1 // Odd number divisors
+	}
 }
 
 // Min returns the minimum of a list of values.
