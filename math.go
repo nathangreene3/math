@@ -3,6 +3,7 @@ package math
 import (
 	gomath "math"
 	"math/big"
+	"math/bits"
 	"sort"
 
 	"github.com/nathangreene3/math/bitmask"
@@ -306,6 +307,18 @@ func MinInt(xs ...int) int {
 	}
 
 	return min
+}
+
+// NextPowOfTwo returns 2^k greater than or equal to n for the smallest k >= 0.
+func NextPowOfTwo(n int) int {
+	switch {
+	case n < 1:
+		return 1
+	case n&(n-1) == 0:
+		return n
+	default:
+		return 1 << bits.Len(uint(n))
+	}
 }
 
 // Pascal returns Pascal's triangle, consisting of n levels. The (n,k)th entry

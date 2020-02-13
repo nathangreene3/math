@@ -445,6 +445,57 @@ func TestTotient(t *testing.T) {
 	}
 }
 
+// TODO: Finish testing for 32 and 64 bits.
+func TestNextPowOfTwo(t *testing.T) {
+	tests := []struct {
+		n, exp int
+	}{
+		{
+			n:   0,
+			exp: 1,
+		},
+		{
+			n:   1,
+			exp: 1,
+		},
+		{
+			n:   2,
+			exp: 2,
+		},
+		{
+			n:   3,
+			exp: 4,
+		},
+		{
+			n:   4,
+			exp: 4,
+		},
+		{
+			n:   5,
+			exp: 8,
+		},
+		{
+			n:   6,
+			exp: 8,
+		},
+		{
+			n:   7,
+			exp: 8,
+		},
+		{
+			n:   8,
+			exp: 8,
+		},
+	}
+
+	for _, test := range tests {
+		rec := NextPowOfTwo(test.n)
+		if test.exp != rec {
+			t.Fatalf("\n   given %d\nexpected %d\nreceived %d\n", test.n, test.exp, rec)
+		}
+	}
+}
+
 func BenchmarkPowInt(b *testing.B) {
 	a, p := 10, 10
 	for i := 0; i < b.N; i++ {
