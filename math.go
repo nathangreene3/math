@@ -199,6 +199,10 @@ func Factorial(n int) int {
 	return f
 }
 
+func fermat(p int) bool {
+	return p == 2 || PowInt(2, p-1)%p == 1
+}
+
 // Fibonacci returns the nth Fibonacci term, where the 0th and 1st terms are 1
 // and the nth term is the sum of the previous two terms.
 func Fibonacci(n int) int {

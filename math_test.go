@@ -381,7 +381,7 @@ func TestPowInt(t *testing.T) {
 }
 
 func TestEratosthenes(t *testing.T) {
-	primes := Eratosthenes(75000)
+	primes := Eratosthenes(2000000)
 	for _, p := range primes {
 		if !IsPrime(p) {
 			t.Fatalf("\np = %d is composite, not prime\n", p)
@@ -520,4 +520,8 @@ func BenchmarkShift(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		_ = 2 >> 1
 	}
+}
+
+func TestProjEuler10(t *testing.T) {
+
 }
