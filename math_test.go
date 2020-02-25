@@ -214,10 +214,7 @@ func TestFactorial(t *testing.T) {
 
 func TestGCD(t *testing.T) {
 	tests := []struct {
-		a        int
-		b        int
-		expected int
-		actual   int
+		a, b, expected int
 	}{
 		{a: 0, b: 0, expected: 0},
 		{a: 0, b: 1, expected: 1},
@@ -227,20 +224,22 @@ func TestGCD(t *testing.T) {
 		{a: 2, b: 4, expected: 2},
 		{a: 4, b: 2, expected: 2},
 		{a: 5, b: 10, expected: 5},
+		{a: -5, b: 10, expected: 5},
+		{a: 5, b: -10, expected: 5},
+		{a: -5, b: -10, expected: 5},
 	}
 
 	for _, test := range tests {
-		test.actual = GCD(test.a, test.b)
-		if test.expected != test.actual {
-			t.Fatalf("\nexpected: %d\nreceived: %d\n", test.expected, test.actual)
+		if rec := GCD(test.a, test.b); test.expected != rec {
+			t.Errorf("\n   given: (%d,%d)\nexpected: %d\nreceived: %d\n", test.a, test.b, test.expected, rec)
 		}
 	}
 }
 
 func TestIsPrime(t *testing.T) {
 	tests := []struct {
-		a        int
-		exp, rec bool
+		a   int
+		exp bool
 	}{
 
 		{a: 0, exp: false},
@@ -276,9 +275,8 @@ func TestIsPrime(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		test.rec = IsPrime(test.a)
-		if test.exp != test.rec {
-			t.Fatalf("\na = %d\nexpected: %t\nreceived: %t\n", test.a, test.exp, test.rec)
+		if rec := IsPrime(test.a); test.exp != rec {
+			t.Fatalf("\n   given: %d\nexpected: %t\nreceived: %t\n", test.a, test.exp, rec)
 		}
 	}
 }
@@ -376,15 +374,6 @@ func TestPowInt(t *testing.T) {
 		test.rec = PowInt(test.a, test.p)
 		if test.exp != test.rec {
 			t.Fatalf("expected %v\nreceived %v\n", test.exp, test.rec)
-		}
-	}
-}
-
-func TestEratosthenes(t *testing.T) {
-	primes := Eratosthenes(2000000)
-	for _, p := range primes {
-		if !IsPrime(p) {
-			t.Fatalf("\np = %d is composite, not prime\n", p)
 		}
 	}
 }

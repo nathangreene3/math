@@ -4,9 +4,6 @@ import (
 	gomath "math"
 	"math/big"
 	"math/bits"
-	"sort"
-
-	"github.com/nathangreene3/math/bitmask"
 )
 
 // Approx returns true if |x-y| <= prec, where prec in [0,1].
@@ -86,6 +83,11 @@ func Choose(n, k int) int {
 	return Pascal(n + 1)[n][k]
 }
 
+// coprime returns true if a and b have no common factors. That is, gcd(a,b) = 1 --> a and b are coprime.
+func coprime(a, b int) bool {
+	return GCD(a, b) == 1
+}
+
 // Cototient returns n-phi(n).
 func Cototient(n int) int {
 	return n - Totient(n)
@@ -110,48 +112,12 @@ func CoVar(x, y []float64) float64 {
 	return cv / float64(n)
 }
 
-// Eratosthenes returns a list of prime integers up to and including n.
-func Eratosthenes(n int) []int {
-	// TODO: Finish after bitmask is done.
-	if n < 2 {
-		return nil
-	}
-
-	pm := make(map[int]struct{})
-	bm := bitmask.New(big.NewInt(0))
-	for k := 2; k <= n; k++ {
-		pm[k] = struct{}{}
-		bm.Set(big.NewInt(int64(k)))
-	}
-
-	for p := 2; p <= n; p++ {
-		for k := range pm {
-			if p != k && k/p*p == k {
-				delete(pm, k)
-				bm.Clear(big.NewInt(int64(k)))
-			}
-		}
-	}
-
-	primes := make([]int, 0, n)
-	for p := range pm {
-		primes = append(primes, p)
-	}
-
-	sort.Ints(primes)
-	return primes
-}
-
 // Factor returns a map of factors to the number of times they divide an integer
 // n. That is, for each key-value pair (k,v), k divides n a total of v times.
 // Each key will be a prime divisor, which means k will be at least two. An
 // integer is prime if its only Factor is itself (and 1, which is called the
 // empty prime).
 func Factor(n int) map[int]int {
-	if n < 1 {
-		panic("cannot factor non-positive integer")
-	}
-
 	// Theorem: If p is prime greater than 3, then p = 6k-1 or 6k+1 for some
 	// maximal k > 0.
 
@@ -163,6 +129,14 @@ func Factor(n int) map[int]int {
 	// 2. Check all integers 6k-1 and 6k+1 less than sqrt(n) to help eliminate
 	//    multiples of 2 and 3.
 	factors := make(map[int]int)
+	switch {
+	case n == 0:
+		return factors
+	case n < 0:
+		factors[-1] = 1
+		n *= -1
+	}
+
 	for ; n&1 == 0; n >>= 1 {
 		factors[2]++
 	}
@@ -185,7 +159,7 @@ func Factor(n int) map[int]int {
 	return factors
 }
 
-// Factorial returns n!
+// Factorial returns n! for n >= 0.
 func Factorial(n int) int {
 	if n < 0 {
 		panic("n must be non-negative")
@@ -197,10 +171,6 @@ func Factorial(n int) int {
 	}
 
 	return f
-}
-
-func fermat(p int) bool {
-	return p == 2 || PowInt(2, p-1)%p == 1
 }
 
 // Fibonacci returns the nth Fibonacci term, where the 0th and 1st terms are 1
@@ -217,25 +187,21 @@ func Fibonacci(n int) int {
 // GCD returns the largest divisor of both a and b. If GCD(a,b) == 1, then a and
 // b are relatively prime.
 func GCD(a, b int) int {
-	if a < 0 || b < 0 {
-		panic("invalid sign")
-	}
-
-	if a < b {
+	if b < a {
 		a, b = b, a
 	}
 
-	for 0 < b {
-		a, b = b, a%b
+	for 0 < a {
+		a, b = b%a, a
 	}
 
-	return a
+	return b
 }
 
 // IsPrime indicates if n is prime.
 func IsPrime(n int) bool {
-	if n < 2 {
-		return false // Prevents panic on non-positives and 1 isn't prime anyway
+	if n < 2 || !big.NewInt(int64(n)).ProbablyPrime(3) {
+		return false
 	}
 
 	_, ok := Factor(n)[n]
