@@ -65,49 +65,104 @@ func (x *Z) Abs() *Z {
 func (x *Z) Add(y *Z) *Z {
 	n := x.modulus
 	if n != y.modulus {
-		panic("moduli do not match")
+		panic("unequal moduli")
 	}
 
 	var (
 		xLen, yLen = len(x.value), len(y.value)
 		minLen     = math.MinInt(xLen, yLen)
-		v0, k0     int // x(i) + y(i) = k0*n + v0
-		v1, k1     int // v0 + k1 = k1*n + v1
+		v, k0, k1  int
 	)
 
 	if x.negative != y.negative {
-		// TODO: Handle sign of x before/after subtraction
-		for i := 0; i < minLen; i++ {
-			// TODO: Finish subtraction
-			v0, k0 = mod.SubtractWithBorrow(x.value[i], y.value[i], n)
-			// v1, k1 = mod.SubtractWithBorrow()
-			x.value[i] = v1
-			k1 += k0
+		if x.CompareAbs(y) < 0 {
+			x.Negate()
 		}
 
-		return x.trim()
+		return x.subtractIgnoreSign(y)
 	}
 
+	return x.addIgnoreSign(y)
+}
+
+func (x *Z) addIgnoreSign(y *Z) *Z {
+	n := x.modulus
+	if n != y.modulus {
+		panic("unequal moduli")
+	}
+
+	var (
+		xLen, yLen = len(x.value), len(y.value)
+		minLen     = math.MinInt(xLen, yLen)
+		v, k0, k1  int
+	)
+
 	for i := 0; i < minLen; i++ {
-		v0, k0 = mod.AddWithCarry(x.value[i], y.value[i], n)
-		v1, k1 = mod.AddWithCarry(v0, k1, n)
-		x.value[i] = v1
+		v, k0 = mod.AddWithCarry(x.value[i], k1, n)         // x(i) + k(i-1)
+		x.value[i], k1 = mod.AddWithCarry(v, y.value[i], n) // (x(i) + k(i-1)) + y(i)
 		k1 += k0
 	}
 
 	switch minLen {
 	case xLen:
 		for i := minLen; i < yLen; i++ {
-			v1, k1 = mod.AddWithCarry(y.value[i], k1, n)
-			x.value = append(x.value, v1)
+			v, k1 = mod.AddWithCarry(y.value[i], k1, n) // y(i) + k(i-1)
+			x.value = append(x.value, v)                // x(i) = y(i) + k(i-1)
 		}
 	case yLen:
 		for i := minLen; i < xLen && k1 != 0; i++ {
-			x.value[i], k1 = mod.AddWithCarry(x.value[i], k1, n)
+			x.value[i], k1 = mod.AddWithCarry(x.value[i], k1, n) // x(i) = x(i) + k(i-1)
 		}
 	}
 
-	return x.trim()
+	for k1 != 0 {
+		v, k1 = mod.AddWithCarry(k1, 0, n)
+		x.value = append(x.value, v)
+	}
+
+	return x.clean()
+}
+
+func (x *Z) subtractIgnoreSign(y *Z) *Z {
+	n := x.modulus
+	if n != y.modulus {
+		panic("unequal moduli")
+	}
+
+	if x.negative != y.negative && x.CompareAbs(y) < 0 {
+		x.Negate()
+	}
+
+	var (
+		xLen, yLen = len(x.value), len(y.value)
+		minLen     = math.MinInt(xLen, yLen)
+		v, k0, k1  int
+	)
+
+	for i := 0; i < minLen; i++ {
+		v, k0 = mod.SubtractWithBorrow(x.value[i], k1, n)         // x(i) - k(i-1)
+		x.value[i], k1 = mod.SubtractWithBorrow(v, y.value[i], n) // (x(i) - k(i-1)) - y(i)
+		k1 += k0
+	}
+
+	switch minLen {
+	case xLen:
+		for i := minLen; i < yLen; i++ {
+			v, k1 = mod.SubtractWithBorrow(y.value[i], k1, n) // y(i) - k(i-1)
+			x.value = append(x.value, v)                      // x(i) = (y(i) - k(i-1)) - x(i)
+		}
+	case yLen:
+		for i := minLen; i < xLen && k1 != 0; i++ {
+			x.value[i], k1 = mod.SubtractWithBorrow(x.value[i], k1, n) // x(i) = x(i) - k(i-1)
+		}
+	}
+
+	for k1 != 0 {
+		v, k1 = mod.SubtractWithBorrow(k1, 0, n)
+		x.value = append(x.value, v)
+	}
+
+	return x.clean()
 }
 
 func (x *Z) addInt(y int) *Z {
@@ -170,6 +225,32 @@ func (x *Z) Compare(y *Z) int {
 
 			return 0
 		}
+	}
+}
+
+// CompareAbs ...
+func (x *Z) CompareAbs(y *Z) int {
+	if x.modulus != y.modulus {
+		panic("unequal moduli")
+	}
+
+	xLen, yLen := len(x.value), len(y.value)
+	switch {
+	case xLen < yLen:
+		return -1
+	case yLen < xLen:
+		return 1
+	default:
+		for i := 0; i < xLen; i++ {
+			switch {
+			case x.value[i] < y.value[i]:
+				return -1
+			case y.value[i] < x.value[i]:
+				return 1
+			}
+		}
+
+		return 0
 	}
 }
 
@@ -317,7 +398,21 @@ func (x *Z) String() string {
 
 // Subtract ...
 func (x *Z) Subtract(y *Z) *Z {
-	return x.subtractInt(y.Integer())
+	// var (
+	// 	xLen,yLen=len(x.value),len(y.value)
+	// 	minLen=math.MinInt(xLen,yLen)
+	// 	v,k0,k1 int
+	// )
+
+	// if x.negative!=y.negative{
+
+	// }
+
+	// for i:=0;i<minLen;i++{
+	// 	v,k0=
+	// }
+
+	return x.trim()
 }
 
 func (x *Z) subtractInt(y int) *Z {
