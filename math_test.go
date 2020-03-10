@@ -227,6 +227,7 @@ func TestGCD(t *testing.T) {
 		{a: 2, b: 4, expected: 2},
 		{a: 4, b: 2, expected: 2},
 		{a: 5, b: 10, expected: 5},
+		{a: 10, b: 5, expected: 5},
 	}
 
 	for _, test := range tests {
@@ -280,13 +281,6 @@ func TestIsPrime(t *testing.T) {
 		if test.exp != test.rec {
 			t.Fatalf("\na = %d\nexpected: %t\nreceived: %t\n", test.a, test.exp, test.rec)
 		}
-	}
-}
-
-func TestNegShift(t *testing.T) {
-	exp, rec := -2/2, -2>>1
-	if exp != rec {
-		t.Fatalf("expected %d\nreceived %d\n", exp, rec)
 	}
 }
 
@@ -380,15 +374,6 @@ func TestPowInt(t *testing.T) {
 	}
 }
 
-func TestEratosthenes(t *testing.T) {
-	primes := Eratosthenes(75000)
-	for _, p := range primes {
-		if !IsPrime(p) {
-			t.Fatalf("\np = %d is composite, not prime\n", p)
-		}
-	}
-}
-
 func TestTotient(t *testing.T) {
 	tests := []struct {
 		n   int
@@ -450,42 +435,23 @@ func TestNextPowOfTwo(t *testing.T) {
 	tests := []struct {
 		n, exp int
 	}{
-		{
-			n:   0,
-			exp: 1,
-		},
-		{
-			n:   1,
-			exp: 1,
-		},
-		{
-			n:   2,
-			exp: 2,
-		},
-		{
-			n:   3,
-			exp: 4,
-		},
-		{
-			n:   4,
-			exp: 4,
-		},
-		{
-			n:   5,
-			exp: 8,
-		},
-		{
-			n:   6,
-			exp: 8,
-		},
-		{
-			n:   7,
-			exp: 8,
-		},
-		{
-			n:   8,
-			exp: 8,
-		},
+		{n: -8, exp: -8},
+		{n: -7, exp: -8},
+		{n: -6, exp: -8},
+		{n: -5, exp: -8},
+		{n: -4, exp: -4},
+		{n: -3, exp: -4},
+		{n: -2, exp: -2},
+		{n: -1, exp: -1},
+		{n: 0, exp: 1},
+		{n: 1, exp: 1},
+		{n: 2, exp: 2},
+		{n: 3, exp: 4},
+		{n: 4, exp: 4},
+		{n: 5, exp: 8},
+		{n: 6, exp: 8},
+		{n: 7, exp: 8},
+		{n: 8, exp: 8},
 	}
 
 	for _, test := range tests {
@@ -510,14 +476,36 @@ func BenchmarkGomathPow(b *testing.B) {
 	}
 }
 
-func BenchmarkDivide(b *testing.B) {
+var s = make([]int, 256)
+
+func BenchmarkFor1(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		_ = 2 / 2
+		for j := 0; j < len(s); j++ {
+			_ = j
+		}
 	}
 }
 
-func BenchmarkShift(b *testing.B) {
+func BenchmarkFor2(b *testing.B) {
+	n := len(s)
 	for i := 0; i < b.N; i++ {
-		_ = 2 >> 1
+		for j := 0; j < n; j++ {
+			_ = j
+		}
+	}
+}
+
+func BenchmarkFor3(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		for j := range s {
+			_ = j
+		}
+	}
+}
+
+func BenchmarkSum(b *testing.B) {
+	s := make([]float64, 256)
+	for i := 0; i < b.N; i++ {
+		_ = Sum(s...)
 	}
 }

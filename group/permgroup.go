@@ -32,10 +32,10 @@ func Cayley(ps ...Permutation) [][]Permutation {
 		table = make([][]Permutation, 0, n)
 	)
 
-	for _, p := range ps {
+	for i := 0; i < n; i++ {
 		permutations := make([]Permutation, 0, n)
-		for _, q := range ps {
-			permutations = append(permutations, p.Multiply(q))
+		for j := 0; j < n; j++ {
+			permutations = append(permutations, ps[i].Multiply(ps[j]))
 		}
 
 		table = append(table, permutations)
@@ -82,8 +82,8 @@ func (a Permutation) Equal(b Permutation) bool {
 // generate TODO: generate entire (sub) group.
 func generate(a ...Permutation) set.Set {
 	S := set.New()
-	for _, ai := range a {
-		S = S.Union(ai.Generate())
+	for i := 0; i < len(a); i++ {
+		S = S.Union(a[i].Generate())
 	}
 
 	return S
@@ -112,7 +112,8 @@ func (a Permutation) isPermutation() bool {
 		bm = bitmask.New(big.NewInt(0))
 	)
 
-	for _, v := range a {
+	for i := 0; i < len(a); i++ {
+		v := a[i]
 		switch {
 		case v < 0, n <= v:
 			return false
@@ -128,13 +129,12 @@ func (a Permutation) isPermutation() bool {
 
 // Multiply several permutations from left to right.
 func Multiply(a ...Permutation) Permutation {
-	n := len(a)
-	if n == 0 {
-		return nil
+	if len(a) == 0 {
+		return make(Permutation, 0)
 	}
 
 	b := a[0].Copy()
-	for i := 1; i < n; i++ {
+	for i := 1; i < len(a); i++ {
 		b = b.Multiply(a[i])
 	}
 

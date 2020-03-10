@@ -2,6 +2,12 @@ package vector
 
 import "testing"
 
+// TODO
+func TestFormat(t *testing.T) {
+	// <1.000e+00,2.000e+00,3.000e+00>
+	// t.Fatalf("%s\n", New(3, func(i int) float64 { return float64(i + 1) }).Format('e', 3, '<', '>', ','))
+}
+
 func TestIsMultipleOf(t *testing.T) {
 	tests := []struct {
 		v        Vector

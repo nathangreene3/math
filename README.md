@@ -10,7 +10,7 @@ go get github.com/nathangreene3/math
 go get github.com/nathangreene3/math/bitmask
 ```
 
-The bitmask package provides bitmasking functionality. A bitmask is implemented as a uint64.
+The bitmask package provides bitmasking functionality.
 
 ## linalg
 

@@ -1,8 +1,9 @@
 package vector
 
 import (
-	"fmt"
 	gomath "math"
+	"strconv"
+	"strings"
 
 	"github.com/nathangreene3/math"
 )
@@ -167,6 +168,22 @@ func (v Vector) Equal(w Vector) bool {
 	return v.Compare(w) == 0
 }
 
+// Format a vector as a string. TODO: Finish documentation.
+func (v Vector) Format(fmt byte, prec int, left, right, sep rune) string {
+	var sb strings.Builder
+	sb.WriteRune(left)
+	if n := len(v); 0 < n {
+		sb.WriteString(strconv.FormatFloat(v[0], fmt, prec, 64))
+		for i := 1; i < n; i++ {
+			sb.WriteRune(sep)
+			sb.WriteString(strconv.FormatFloat(v[i], fmt, prec, 64))
+		}
+	}
+
+	sb.WriteRune(right)
+	return sb.String()
+}
+
 // IsMultipleOf returns true if either v or w is a multiple of the other
 // (v = aw for some real a).
 func (v Vector) IsMultipleOf(w Vector) bool {
@@ -225,9 +242,9 @@ func (v Vector) Multiply(a float64) {
 	}
 }
 
-// String returns a string-representation of a vector.
+// String returns the default string-representation of a vector.
 func (v Vector) String() string {
-	return fmt.Sprintf("%0.3f", v) // TODO: Find the fastest way to stringify slices.
+	return v.Format('f', -1, '[', ']', ' ')
 }
 
 // Subtract returns v-w.

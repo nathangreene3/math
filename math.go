@@ -2,11 +2,7 @@ package math
 
 import (
 	gomath "math"
-	"math/big"
 	"math/bits"
-	"sort"
-
-	"github.com/nathangreene3/math/bitmask"
 )
 
 // Approx returns true if |x-y| <= prec, where prec in [0,1].
@@ -21,8 +17,8 @@ func Approx(x, y, prec float64) bool {
 // Base10 converts a number n represented in base b to decimal.
 func Base10(n []int, b int) int {
 	var x int
-	for i, v := range n {
-		x += v * PowInt(b, i)
+	for i := 0; i < len(n); i++ {
+		x += n[i] * PowInt(b, i)
 	}
 
 	return x
@@ -93,8 +89,7 @@ func Cototient(n int) int {
 
 // CoVar returns the covariance of two sets of values.
 func CoVar(x, y []float64) float64 {
-	n := len(x)
-	if n != len(y) {
+	if len(x) != len(y) {
 		panic("dimension mismatch")
 	}
 
@@ -103,43 +98,11 @@ func CoVar(x, y []float64) float64 {
 		cv     float64
 	)
 
-	for i := 0; i < n; i++ {
+	for i := 0; i < len(x); i++ {
 		cv += (x[i] - mx) * (y[i] - my)
 	}
 
-	return cv / float64(n)
-}
-
-// Eratosthenes returns a list of prime integers up to and including n.
-func Eratosthenes(n int) []int {
-	// TODO: Finish after bitmask is done.
-	if n < 2 {
-		return nil
-	}
-
-	pm := make(map[int]struct{})
-	bm := bitmask.New(big.NewInt(0))
-	for k := 2; k <= n; k++ {
-		pm[k] = struct{}{}
-		bm.Set(big.NewInt(int64(k)))
-	}
-
-	for p := 2; p <= n; p++ {
-		for k := range pm {
-			if p != k && k/p*p == k {
-				delete(pm, k)
-				bm.Clear(big.NewInt(int64(k)))
-			}
-		}
-	}
-
-	primes := make([]int, 0, n)
-	for p := range pm {
-		primes = append(primes, p)
-	}
-
-	sort.Ints(primes)
-	return primes
+	return cv / float64(len(x))
 }
 
 // Factor returns a map of factors to the number of times they divide an integer
@@ -221,8 +184,7 @@ func GCD(a, b int) int {
 		a, b = b, a
 	}
 
-	for 0 < b {
-		a, b = b, a%b
+	for ; 0 < b; a, b = b, a%b {
 	}
 
 	return a
@@ -231,7 +193,7 @@ func GCD(a, b int) int {
 // IsPrime indicates if n is prime.
 func IsPrime(n int) bool {
 	if n < 2 {
-		return false // Prevents panic on non-positives and 1 isn't prime anyway
+		return false
 	}
 
 	_, ok := Factor(n)[n]
@@ -258,26 +220,26 @@ func LCM(a, b int) int {
 
 // Max returns the maximum of a list of values.
 func Max(xs ...float64) float64 {
-	max := xs[0]
-	for _, x := range xs[1:] {
-		if max < x {
-			max = x
+	m := xs[0]
+	for i := 1; i < len(xs); i++ {
+		if m < xs[i] {
+			m = xs[i]
 		}
 	}
 
-	return max
+	return m
 }
 
 // MaxInt returns the maximum of a list of values.
 func MaxInt(xs ...int) int {
-	max := xs[0]
-	for _, x := range xs[1:] {
-		if max < x {
-			max = x
+	m := xs[0]
+	for i := 1; i < len(xs); i++ {
+		if m < xs[i] {
+			m = xs[i]
 		}
 	}
 
-	return max
+	return m
 }
 
 // Mean returns the Mean (or average) of a list of values.
@@ -287,36 +249,40 @@ func Mean(xs ...float64) float64 {
 
 // Min returns the minimum of a list of values.
 func Min(xs ...float64) float64 {
-	min := xs[0]
-	for _, x := range xs[1:] {
-		if x < min {
-			min = x
+	m := xs[0]
+	for i := 1; i < len(xs); i++ {
+		if xs[i] < m {
+			m = xs[i]
 		}
 	}
 
-	return min
+	return m
 }
 
 // MinInt returns the minimum of a list of values.
 func MinInt(xs ...int) int {
-	min := xs[0]
-	for _, x := range xs[1:] {
-		if x < min {
-			min = x
+	m := xs[0]
+	for i := 1; i < len(xs); i++ {
+		if xs[i] < m {
+			m = xs[i]
 		}
 	}
 
-	return min
+	return m
 }
 
-// NextPowOfTwo returns 2^k greater than or equal to n for the smallest k >= 0.
+// NextPowOfTwo returns 2^k greater than or equal to n for minimal k >= 0.
 func NextPowOfTwo(n int) int {
 	switch {
-	case n < 1:
+	case n < 0:
+		return -NextPowOfTwo(-n)
+	case n == 0:
 		return 1
 	case n&(n-1) == 0:
+		// n = 2^k, for some k >= 0
 		return n
 	default:
+		// 2^k > n where k bits represent n in base 2 (disregarding the leading sign bit)
 		return 1 << bits.Len(uint(n))
 	}
 }
@@ -344,7 +310,7 @@ func Pascal(n int) [][]int {
 	return tri
 }
 
-// PowInt returns a^p for any integer a and non-zero integer p (exception: 0^0
+// PowInt returns a^p for any integer a and non-negative integer p (exception: 0^0
 // is undefined and will panic unlike most libraries).
 func PowInt(a, p int) int {
 	switch {
@@ -355,8 +321,6 @@ func PowInt(a, p int) int {
 		return 0
 	case p < 0:
 		panic("p must be non-negative")
-	case p == 0:
-		return 1
 	}
 
 	// Yacca's method
@@ -380,8 +344,8 @@ func StDev(xs ...float64) float64 {
 // Sum returns the sum of a list of values.
 func Sum(xs ...float64) float64 {
 	var s float64
-	for _, x := range xs {
-		s += x
+	for i := 0; i < len(xs); i++ {
+		s += xs[i]
 	}
 
 	return s
@@ -390,8 +354,8 @@ func Sum(xs ...float64) float64 {
 // SumInts returns the sum of a list of values.
 func SumInts(xs ...int) int {
 	var s int
-	for _, x := range xs {
-		s += x
+	for i := 0; i < len(xs); i++ {
+		s += xs[i]
 	}
 
 	return s
@@ -410,12 +374,12 @@ func Totient(n int) int {
 // Var returns the Var of a list of values.
 func Var(xs ...float64) float64 {
 	var (
-		m    = Mean(xs...)
-		v, t float64
+		m = Mean(xs...)
+		v float64
 	)
 
-	for _, x := range xs {
-		t = x - m
+	for i := 0; i < len(xs); i++ {
+		t := xs[i] - m
 		v += t * t
 	}
 
