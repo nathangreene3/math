@@ -267,6 +267,7 @@ func TestIsPrime(t *testing.T) {
 		{a: 20, exp: false},
 
 		// Mersenne Prime: Mp := 2^p-1
+		// Not all Merenne numbers are prime.
 		{a: PowInt(2, 2) - 1, exp: true},
 		{a: PowInt(2, 3) - 1, exp: true},
 		{a: PowInt(2, 5) - 1, exp: true},
@@ -473,33 +474,6 @@ func BenchmarkGomathPow(b *testing.B) {
 	a, p := 10, 10
 	for i := 0; i < b.N; i++ {
 		_ = int(gomath.Pow(float64(a), float64(p)))
-	}
-}
-
-var s = make([]int, 256)
-
-func BenchmarkFor1(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		for j := 0; j < len(s); j++ {
-			_ = j
-		}
-	}
-}
-
-func BenchmarkFor2(b *testing.B) {
-	n := len(s)
-	for i := 0; i < b.N; i++ {
-		for j := 0; j < n; j++ {
-			_ = j
-		}
-	}
-}
-
-func BenchmarkFor3(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		for j := range s {
-			_ = j
-		}
 	}
 }
 
