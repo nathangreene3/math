@@ -108,8 +108,10 @@ func CoVar(x, y []float64) float64 {
 // Factor returns a map of factors to the number of times they divide an integer
 // n. That is, for each key-value pair (k,v), k divides n a total of v times.
 // Each key will be a prime divisor, which means k will be at least two. An
-// integer is prime if its only Factor is itself (and 1, which is called the
-// empty prime).
+// integer is prime if its only factor is itself (and 1, which is called the
+// empty prime). Since the values are the number of times a factor divides a the
+// given number, one is not included as it can divide anything infinitely many
+// times.
 func Factor(n int) map[int]int {
 	if n < 1 {
 		panic("cannot factor non-positive integer")
@@ -196,8 +198,7 @@ func IsPrime(n int) bool {
 		return false
 	}
 
-	_, ok := Factor(n)[n]
-	return ok
+	return len(Factor(n)) == 1
 }
 
 // LCM returns the largest multiple of a and b divisible by a and b.
