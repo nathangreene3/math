@@ -389,3 +389,30 @@ func benchmarkInline2(b *testing.B, A, B matrix) bool {
 
 	return b.Run(fmt.Sprintf("len=%d", len(A)), f)
 }
+
+func BenchmarkFors(b *testing.B) {
+	benchmarkFor0(b, 10, 10, 10, 10, 10, 10, 10, 10)
+	benchmarkFor1(b, 10, 10, 10, 10, 10, 10, 10, 10)
+}
+
+func benchmarkFor0(b *testing.B, n0, n1, n2, n3, n4, n5, n6, n7 int) bool {
+	f := func(b0 *testing.B) {
+		for i := 0; i < b0.N; i++ {
+			for j := 0; j < n0*n1*n2*n3*n4*n5*n6*n7; j++ {
+			}
+		}
+	}
+
+	return b.Run("After", f)
+}
+
+func benchmarkFor1(b *testing.B, n0, n1, n2, n3, n4, n5, n6, n7 int) bool {
+	f := func(b0 *testing.B) {
+		for i := 0; i < b0.N; i++ {
+			for j, n := 0, n0*n1*n2*n3*n4*n5*n6*n7; j < n; j++ {
+			}
+		}
+	}
+
+	return b.Run("Before", f)
+}
