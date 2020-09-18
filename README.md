@@ -14,7 +14,7 @@ The bitmask package provides bitmasking functionality.
 
 ## linalg
 
-The linear algebra package contains the vector and matrix sub-packages. A vector is simply defined as a `[]float64`, and a matrix is a slice of vectors.
+The linear algebra package contains the vector and matrix sub-packages. A vector is defined as a `[]float64`, and a matrix is defined as a `[]vector`.
 
 ### matrix
 
@@ -27,6 +27,14 @@ go get github.com/nathangreene3/math/linalg/matrix
 ```go
 go get github.com/nathangreene3/math/vector
 ```
+
+## sequence
+
+```go
+go get github.com/nathangreene3/math/sequence
+```
+
+A sequence is defined as a `func(int) float64`.
 
 ## set
 

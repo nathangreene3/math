@@ -26,9 +26,9 @@ type Generator func(i int) float64
 // VECTOR CONSTRUCTORS
 // ------------------------------------------------------------------------------
 
-// New generates a vector of dimension n with entries defined by a generating
+// Gen generates a vector of dimension n with entries defined by a generating
 // function f.
-func New(n int, f Generator) Vector {
+func Gen(n int, f Generator) Vector {
 	v := make(Vector, 0, n)
 	for i := 0; i < n; i++ {
 		v = append(v, f(i))
@@ -37,13 +37,13 @@ func New(n int, f Generator) Vector {
 	return v
 }
 
-// List values as a vector.
-func List(values ...float64) Vector {
+// New values as a vector.
+func New(values ...float64) Vector {
 	return append(make(Vector, 0, len(values)), values...)
 }
 
-// Zero returns the zero vector of n dimensions.
-func Zero(n int) Vector {
+// Zeroes returns an n-dimensional vector with zeroes for all entries.
+func Zeroes(n int) Vector {
 	return make(Vector, n)
 }
 
@@ -51,16 +51,50 @@ func Zero(n int) Vector {
 // EXPORTED OPERATIONS ON VECTORS
 // ------------------------------------------------------------------------------
 
-// Approx returns true if v approximates w for a given precision on the range
-// [0,1].
-func (v Vector) Approx(w Vector, prec float64) bool {
-	n := len(v)
-	if n != len(w) {
-		return false
+// Add several vectors to v.
+func (v Vector) Add(ws ...Vector) {
+	for i := 0; i < len(ws); i++ {
+		if len(v) != len(ws[i]) {
+			panic(dimErr)
+		}
+
+		for j := 0; j < len(v); j++ {
+			v[j] += ws[i][j]
+		}
+	}
+}
+
+// Add returns the sum of several vectors.
+func Add(vs ...Vector) Vector {
+	switch len(vs) {
+	case 0:
+		return nil // TODO: Panic instead?
+	case 1:
+		return vs[0].Copy()
+	default:
+		v := vs[0].Copy()
+		v.Add(vs[1:]...)
+		return v
+	}
+}
+
+// Angle returns the Angle between two vectors.
+func (v Vector) Angle(w Vector) float64 {
+	return gomath.Acos(Unit(v).Dot(Unit(w)))
+}
+
+// Approx returns true if v approximates w for a given tolerance on the range [0,1].
+func (v Vector) Approx(w Vector, tol float64) bool {
+	if tol < 0 || 1 < tol {
+		panic("tolerance out of range")
 	}
 
-	for i := 0; i < n; i++ {
-		if !math.Approx(v[i], w[i], prec) {
+	if len(v) != len(w) {
+		return false // TODO: Should this panic here?
+	}
+
+	for i := 0; i < len(v); i++ {
+		if tol < gomath.Abs(v[i]-w[i]) {
 			return false
 		}
 	}
@@ -68,39 +102,10 @@ func (v Vector) Approx(w Vector, prec float64) bool {
 	return true
 }
 
-// Add returns v+w.
-func Add(v, w Vector) Vector {
-	n := len(v)
-	if n != len(w) {
-		panic("dimension mismatch")
-	}
-
-	return New(n, func(i int) float64 { return v[i] + w[i] })
-}
-
-// Add w to v.
-func (v Vector) Add(w Vector) {
-	n := len(v)
-	if n != len(w) {
-		panic("dimension mismatch")
-	}
-
-	for i := 0; i < n; i++ {
-		v[i] += w[i]
-	}
-}
-
-// Angle returns the Angle between two vectors.
-func (v Vector) Angle(w Vector) float64 {
-	return gomath.Acos(v.Unit().Dot(w.Unit()))
-}
-
 // Compare returns -1, 0, or 1 indicating v precedes, is equal to, or follows
 // w. Vectors v and w may be of different dimensions.
 func (v Vector) Compare(w Vector) int {
-	m, n := len(v), len(w)
-	min := math.MinInt(m, n)
-	for i := 0; i < min; i++ {
+	for i, min := 0, math.MinInt(len(v), len(w)); i < min; i++ {
 		switch {
 		case v[i] < w[i]:
 			return -1
@@ -110,53 +115,61 @@ func (v Vector) Compare(w Vector) int {
 	}
 
 	switch {
-	case m < n:
+	case len(v) < len(w):
 		return -1
-	case n < m:
+	case len(w) < len(v):
 		return 1
 	default:
 		return 0
 	}
 }
 
-// Complimentary returns -v.
-func (v Vector) Complimentary() Vector {
-	return Multiply(-1, v)
+// Compliment returns -v.
+func Compliment(v Vector) Vector {
+	return Multiply(v, -1)
+}
+
+// Compliment updates v as v *= -1 and returns v.
+func (v Vector) Compliment() {
+	v.Multiply(-1)
 }
 
 // Copy a vector.
 func (v Vector) Copy() Vector {
-	w := make(Vector, len(v))
-	copy(w, v)
+	return append(make(Vector, 0, len(v)), v...)
+}
+
+// Cross returns the cross product of two vectors.
+func (v Vector) Cross(w Vector) Vector {
+	if len(v) != 3 || len(w) != 3 {
+		panic("Cross: vectors must have length three")
+	}
+
+	return Vector{v[1]*w[2] - v[2]*w[1], -v[0]*w[2] + v[2]*w[0], v[0]*w[1] - v[1]*w[0]}
+}
+
+// Divide returns (1/a)*v.
+func Divide(v Vector, a float64) Vector {
+	w := v.Copy()
+	w.Divide(a)
 	return w
 }
 
-// Dimensions returns len(v).
-func (v Vector) Dimensions() int {
-	return len(v)
-}
-
-// Divide returns v/a.
-func Divide(a float64, v Vector) Vector {
-	return New(len(v), func(i int) float64 { return v[i] / a })
-}
-
-// Divide each value by a.
+// Divide a vector v by a.
 func (v Vector) Divide(a float64) {
-	for i := range v {
+	for i := 0; i < len(v); i++ {
 		v[i] /= a
 	}
 }
 
 // Dot returns v dot w.
 func (v Vector) Dot(w Vector) float64 {
-	n := len(v)
-	if n != len(w) {
-		panic("dimension mismatch")
+	if len(v) != len(w) {
+		panic(dimErr)
 	}
 
 	var s float64
-	for i := 0; i < n; i++ {
+	for i := 0; i < len(v); i++ {
 		s += v[i] * w[i]
 	}
 
@@ -172,9 +185,9 @@ func (v Vector) Equal(w Vector) bool {
 func (v Vector) Format(fmt byte, prec int, left, right, sep rune) string {
 	var sb strings.Builder
 	sb.WriteRune(left)
-	if n := len(v); 0 < n {
+	if 0 < len(v) {
 		sb.WriteString(strconv.FormatFloat(v[0], fmt, prec, 64))
-		for i := 1; i < n; i++ {
+		for i := 1; i < len(v); i++ {
 			sb.WriteRune(sep)
 			sb.WriteString(strconv.FormatFloat(v[i], fmt, prec, 64))
 		}
@@ -184,15 +197,14 @@ func (v Vector) Format(fmt byte, prec int, left, right, sep rune) string {
 	return sb.String()
 }
 
-// IsMultipleOf returns true if either v or w is a multiple of the other
+// IsMultOf returns true if either v or w is a multiple of the other
 // (v = aw for some real a).
-func (v Vector) IsMultipleOf(w Vector) bool {
+func (v Vector) IsMultOf(w Vector) bool {
 	if v.Compare(w) == 0 {
 		return true
 	}
 
-	n := len(v)
-	if n != len(w) {
+	if len(v) != len(w) {
 		return false
 	}
 
@@ -202,43 +214,60 @@ func (v Vector) IsMultipleOf(w Vector) bool {
 	// v[i] and w[i] are both non-zero. Then it sets the ratio or
 	// checks if ratios are consistent.
 	var r float64 // Ratio of each non-zero dimension in v and w
-	for i := 0; i < n; i++ {
+	for i := 0; i < len(v); i++ {
 		switch {
 		case v[i] != 0:
-			switch {
-			case w[i] != 0:
+			if w[i] != 0 {
 				if 0 < r {
 					if r != v[i]/w[i] {
-						return false // Ratios not consistent
+						// Ratios not consistent
+						return false
 					}
 				} else {
-					r = v[i] / w[i] // Ratio should be set only once
+					// Ratio should be set only once
+					r = v[i] / w[i]
 				}
-			default:
-				return false // v[i] != 0, but w[i] == 0
+			} else {
+				// v[i] != 0, but w[i] == 0
+				return false
 			}
 		case w[i] != 0:
-			return false // v[i] == 0, but w[i] != 0
+			// v[i] == 0, but w[i] != 0
+			return false
 		}
 	}
 
 	return true
 }
 
-// Length returns |v|. This is NOT len(v).
-func (v Vector) Length() float64 {
+// Len returns len(v).
+func (v Vector) Len() int {
+	return len(v)
+}
+
+// Mag returns |v|. This is NOT len(v).
+func (v Vector) Mag() float64 {
 	return gomath.Sqrt(v.Dot(v))
 }
 
-// Multiply returns av.
-func Multiply(a float64, v Vector) Vector {
-	return New(len(v), func(i int) float64 { return a * v[i] })
+// Multiply returns a*v.
+func Multiply(v Vector, a float64) Vector {
+	w := v.Copy()
+	w.Multiply(a)
+	return w
 }
 
-// Multiply each value by a.
+// Multiply a vector v by a scalar a and return v.
 func (v Vector) Multiply(a float64) {
-	for i := range v {
+	for i := 0; i < len(v); i++ {
 		v[i] *= a
+	}
+}
+
+// Set a vector.
+func (v Vector) Set(f Generator) {
+	for i := 0; i < len(v); i++ {
+		v[i] = f(i)
 	}
 }
 
@@ -248,27 +277,46 @@ func (v Vector) String() string {
 }
 
 // Subtract returns v-w.
-func Subtract(v, w Vector) Vector {
-	n := len(v)
-	if n != len(w) {
-		panic("dimension mismatch")
+func (v Vector) Subtract(ws ...Vector) {
+	for i := 0; i < len(ws); i++ {
+		if len(v) != len(ws[i]) {
+			panic(dimErr)
+		}
+
+		for j := 0; j < len(v); j++ {
+			v[j] -= ws[i][j]
+		}
 	}
-
-	return New(n, func(i int) float64 { return v[i] - w[i] })
 }
 
-// Subtract w from v.
-func (v Vector) Subtract(w Vector) {
-	v.Add(Multiply(-1, w))
+// Subtract returns v - ws0 - ws1 - ...
+func Subtract(v Vector, ws ...Vector) Vector {
+	w := v.Copy()
+	w.Subtract(ws...)
+	return w
 }
 
-// Projection returns the projection of w onto v (proj_v(w)).
-func (v Vector) Projection(w Vector) Vector {
-	r := v.Length()
-	return Multiply(w.Dot(v)/(r*r), v)
+// Proj returns the projection of w onto v (proj_v(w)).
+func (v Vector) Proj(w Vector) {
+	r := v.Mag()
+	v.Multiply(v.Dot(w) / (r * r))
+}
+
+// Proj ...
+func Proj(v, w Vector) Vector {
+	x := v.Copy()
+	x.Proj(w)
+	return x
 }
 
 // Unit returns v/|v|, a vector of length one pointing in the direction of v.
-func (v Vector) Unit() Vector {
-	return Divide(v.Length(), v)
+func (v Vector) Unit() {
+	v.Divide(v.Mag())
+}
+
+// Unit ...
+func Unit(v Vector) Vector {
+	w := v.Copy()
+	w.Unit()
+	return w
 }

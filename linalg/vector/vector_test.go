@@ -33,7 +33,7 @@ func TestIsMultipleOf(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		test.actual = test.v.IsMultipleOf(test.w)
+		test.actual = test.v.IsMultOf(test.w)
 		if test.expected != test.actual {
 			t.Fatalf("\nexpected: %t\nreceived: %t", test.expected, test.actual)
 		}

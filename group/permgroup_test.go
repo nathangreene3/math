@@ -4,8 +4,8 @@ import "testing"
 
 func TestIsPermutation(t *testing.T) {
 	tests := []struct {
-		a        Permutation
-		exp, rec bool
+		a   Permutation
+		exp bool
 	}{
 		{
 			a:   New(5),
@@ -14,9 +14,18 @@ func TestIsPermutation(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		test.rec = test.a.isPermutation()
-		if test.exp != test.rec {
-			t.Fatalf("expected %v\nreceived %v\n", test.exp, test.rec)
+		rec := test.a.isPermutation()
+		if test.exp != rec {
+			t.Fatalf("\nexpected %v\nreceived %v\n", test.exp, rec)
 		}
 	}
+}
+
+func TestGenerate(t *testing.T) {
+	var (
+		left  = Permutation{1, 3, 2, 0, 4}
+		right = Permutation{0, 2, 4, 3, 1}
+	)
+
+	t.Fatal(generate(left, right))
 }
