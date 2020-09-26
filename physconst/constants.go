@@ -10,9 +10,9 @@ const (
 	// Gravitation (G) is Newton's constant with units m^3/(kg*s^2) and an uncertainty of +/-1.5e-15.
 	Gravitation float64 = 6.67430e-11 // 0.0000000000667430 +/- 0.0000000000000015
 
-	// PlanksConstant (h) is a defined quantity having units J*s.
-	PlanksConstant float64 = 6.62607015e-34
+	// PlancksConstant (h) is a defined quantity having units J*s.
+	PlancksConstant float64 = 6.62607015e-34
 
-	// SpeedOfLight (C) is defined as the speed at which light travels in a vacuum with units m/s.
+	// SpeedOfLight (c) is defined as the speed at which light travels in a vacuum having units m/s.
 	SpeedOfLight float64 = 299792458
 )
