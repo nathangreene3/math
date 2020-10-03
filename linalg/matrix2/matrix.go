@@ -241,6 +241,14 @@ func (A *Matrix) Inverse() {
 	B := A.Join(Identity(A.m))
 	B.ref2()
 
+	for k := 0; k < A.n; k++ {
+		for i := B.m - 2; 0 <= i; i-- {
+			A.mat[i*A.n+k] = B.mat[i*B.n+B.m]
+			for j := i + 1; j < B.m; j++ {
+				A.mat[i*A.n+k] -= B.mat[i*B.n+j] * A.mat[j*A.n+k]
+			}
+		}
+	}
 }
 
 // Join ...

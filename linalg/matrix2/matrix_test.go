@@ -1,6 +1,11 @@
 package matrix2
 
-import "testing"
+import (
+	gomath "math"
+	"testing"
+
+	"github.com/nathangreene3/math/physconst"
+)
 
 func TestMult(t *testing.T) {
 	{ // Pow
@@ -103,5 +108,24 @@ func TestREF(t *testing.T) {
 		B.ref2()
 		t.Errorf("\n%s\n%s\n", A, B)
 		t.Errorf("\n%v\n", New(4, 4, 1, -1, 2, -1, 2, -2, 3, -3, 1, 1, 1, 0, 1, -1, 4, 3).Solve(NewVector(-8, -20, -2, 4)))
+	}
+
+	{
+		A := New(2, 2, 1, 2, 3, 4)
+		A.Inverse()
+		t.Errorf("\n%v\n", A)
+	}
+
+	{
+		// A pion has kinetic energy of 90.0 MeV and rest energy 140. MeV. It
+		// decays into two photons scattering at two potentially different
+		// angles with respect to the direction of motion of the pion.
+		var (
+			K, E0          float64 = 90, 140
+			theta0, theta1 float64 = 0, -gomath.Pi
+			p                      = New(2, 2, gomath.Cos(theta0), gomath.Cos(theta1), 1, 1).Solve(NewVector(gomath.Sqrt(gomath.Pow(K+E0, 2)-gomath.Pow(E0, 2))/physconst.SpeedOfLight, E0/physconst.SpeedOfLight))
+		)
+
+		t.Errorf("\n%v\n", p)
 	}
 }
