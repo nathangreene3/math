@@ -2,26 +2,40 @@ package matrix2
 
 import (
 	gomath "math"
-	"sort"
 	"strconv"
 	"strings"
 
 	"github.com/nathangreene3/math"
-	vtr "github.com/nathangreene3/math/linalg/vector"
+	vtr "github.com/nathangreene3/math/linalg/vector2"
 )
 
 // Matrix ...
 type Matrix struct {
 	mat  []float64
-	m, n int
+	m, n int // Rows, columns
 }
+
+// LUType dictates how LU factorization is performed.
+type LUType uint8
+
+const (
+	// Doolitle dictates LU factorization has the property Lii = 1 for all i in [0,n).
+	Doolitle LUType = iota
+	// Crout dictates LU factorization has the property Uii = 1 for all i in [0,n).
+	Crout
+	// Cholski dictates LU factorization has the property Lii = Uii for all i in [0,n).
+	Cholski
+)
 
 // ----------------------------------------------------------
 // Matrix constructors
 // ----------------------------------------------------------
 
-// Generator ...
-type Generator func(i, j int) float64
+// Cols ...
+func Cols(vs ...*vtr.Vector) *Matrix {
+	// TODO: Improve this to not allocate twice.
+	return Rows(vs...).Trans()
+}
 
 // Identity ...
 func Identity(n int) *Matrix {
@@ -62,6 +76,21 @@ func New(m, n int, mat ...float64) *Matrix {
 	return &Matrix{mat: append(make([]float64, 0, len(mat)), mat...), m: m, n: n}
 }
 
+// Rows ...
+func Rows(vs ...*vtr.Vector) *Matrix {
+	n := vs[0].Dims()
+	mat := append(make([]float64, 0, n*len(vs)), vs[0].Values()...)
+	for i := 1; i < len(vs); i++ {
+		if n != vs[i].Dims() {
+			panic("dimension mismatch")
+		}
+
+		mat = append(mat, vs[i].Values()...)
+	}
+
+	return &Matrix{mat: mat, m: len(vs), n: n}
+}
+
 // Zeroes ...
 func Zeroes(m, n int) *Matrix {
 	if m < 0 || n < 0 {
@@ -74,6 +103,13 @@ func Zeroes(m, n int) *Matrix {
 // ----------------------------------------------------------
 // Matrix operations
 // ----------------------------------------------------------
+
+// Add returns A+B.
+func Add(A, B *Matrix) *Matrix {
+	C := A.Copy()
+	C.Add(B)
+	return C
+}
 
 // Add ...
 func (A *Matrix) Add(B *Matrix) {
@@ -103,17 +139,22 @@ func (A *Matrix) Approx(B *Matrix, tol float64) bool {
 
 // Col ...
 func (A *Matrix) Col(i int) *Matrix {
-	v := make([]float64, 0, A.m)
+	mat := make([]float64, 0, A.m)
 	for j := i; j < len(A.mat); j += A.n {
-		v = append(v, A.mat[j])
+		mat = append(mat, A.mat[j])
 	}
 
-	return &Matrix{mat: v, m: A.m, n: 1}
+	return &Matrix{mat: mat, m: A.m, n: 1}
 }
 
-// ColMatrix ...
-func ColMatrix(v vtr.Vector) *Matrix {
-	return &Matrix{mat: append(make([]float64, 0, len(v)), v...), m: len(v), n: 1}
+// Cols ...
+func (A *Matrix) Cols() int {
+	return A.n
+}
+
+// ColMatrix returns a matrix having shape n by 1.
+func ColMatrix(v *vtr.Vector) *Matrix {
+	return &Matrix{mat: v.Values(), m: v.Dims(), n: 1}
 }
 
 // Compare ...
@@ -127,34 +168,6 @@ func (A *Matrix) Compare(B *Matrix) int {
 		case A.mat[i] < B.mat[i]:
 			return -1
 		case B.mat[i] < A.mat[i]:
-			return 1
-		}
-	}
-
-	return 0
-}
-
-// CompareCols ...
-func (A *Matrix) CompareCols(i, j int) int {
-	for k := 0; k < A.m; k++ {
-		switch {
-		case A.mat[i*A.n+k] < A.mat[j*A.n+k]:
-			return -1
-		case A.mat[j*A.n+k] < A.mat[i*A.n+k]:
-			return 1
-		}
-	}
-
-	return 0
-}
-
-// CompareRows ...
-func (A *Matrix) CompareRows(i, j int) int {
-	for k := 0; k < A.n; k++ {
-		switch {
-		case A.mat[i*A.n+k] < A.mat[j*A.n+k]:
-			return -1
-		case A.mat[j*A.n+k] < A.mat[i*A.n+k]:
 			return 1
 		}
 	}
@@ -198,7 +211,7 @@ func (A *Matrix) Dims() (int, int) {
 
 // Equal ...
 func (A *Matrix) Equal(B *Matrix) bool {
-	if len(A.mat) != len(B.mat) {
+	if A.m != B.m || A.n != B.n || len(A.mat) != len(B.mat) {
 		return false
 	}
 
@@ -211,6 +224,21 @@ func (A *Matrix) Equal(B *Matrix) bool {
 	return true
 }
 
+// Format ...
+func (A *Matrix) Format() string {
+	var sb strings.Builder
+	for i := 0; i < A.m; i++ {
+		sb.WriteString("[" + strconv.FormatFloat(A.mat[i*A.n], 'f', -1, 64))
+		for j := 1; j < A.n; j++ {
+			sb.WriteString(" " + strconv.FormatFloat(A.mat[i*A.n+j], 'f', -1, 64))
+		}
+
+		sb.WriteString("]\n")
+	}
+
+	return sb.String()
+}
+
 // Get ...
 func (A *Matrix) Get(i, j int) float64 {
 	return A.mat[i*A.n+j]
@@ -219,13 +247,10 @@ func (A *Matrix) Get(i, j int) float64 {
 // Identity ...
 func (A *Matrix) Identity() {
 	for i := 0; i < A.m; i++ {
+		A.mat[i*A.n+i] = 1
 		for j, jmax := i+1, i+A.n; j < jmax; j += A.n {
 			A.mat[j] = 0
 		}
-	}
-
-	for i := 0; i < len(A.mat); i += A.n + 1 {
-		A.mat[i] = 1
 	}
 }
 
@@ -238,7 +263,7 @@ func Inverse(A *Matrix) *Matrix {
 
 // Inverse ...
 func (A *Matrix) Inverse() {
-	B := A.Join(Identity(A.m))
+	B := Join(A, Identity(A.m))
 	B.ref2()
 
 	for k := 0; k < A.n; k++ {
@@ -251,30 +276,111 @@ func (A *Matrix) Inverse() {
 	}
 }
 
-// Join ...
-func (A *Matrix) Join(B *Matrix) *Matrix {
-	mat := make([]float64, 0, len(A.mat)+len(B.mat))
-	for i := 0; i < A.m; i++ {
-		for j, jmax := i*A.n, (i+1)*A.n; j < jmax; j++ {
-			mat = append(mat, A.mat[j])
+// Join several matrices into one.
+func Join(As ...*Matrix) *Matrix {
+	n := As[0].n
+	for i := 1; i < len(As); i++ {
+		if As[0].m != As[i].m {
+			panic("invalid dimension")
 		}
 
-		for j, jmax := i*B.n, (i+1)*B.n; j < jmax; j++ {
-			mat = append(mat, B.mat[j])
+		n += As[i].n
+	}
+
+	mat := make([]float64, 0, As[0].m*n)
+	for i := 0; i < As[0].m; i++ {
+		for j := 0; j < len(As); j++ {
+			mat = append(mat, As[j].mat[i*As[j].n:(i+1)*As[j].n]...)
 		}
 	}
 
-	return &Matrix{mat: mat, m: A.m, n: A.n + B.n}
+	return &Matrix{mat: mat, m: As[0].m, n: n}
 }
 
-// Len ...
-func (A *Matrix) Len() int {
-	return A.m
-}
+// LU ...
+func (A *Matrix) LU(t LUType) (*Matrix, *Matrix) {
+	if A.m != A.n {
+		panic(matrixShape)
+	}
 
-// Less ...
-func (A *Matrix) Less(rowi, rowj int) bool {
-	return 0 < A.CompareRows(rowi, rowj)
+	if A.mat[0] == 0 {
+		return nil, nil
+	}
+
+	switch t {
+	case Doolitle:
+		if A.m == 1 {
+			return &Matrix{mat: []float64{1}, m: 1, n: 1}, &Matrix{mat: []float64{A.mat[0]}, m: 1, n: 1}
+		}
+
+		var (
+			n    = A.m
+			mn   = n * n
+			lmat = make([]float64, mn)
+			umat = make([]float64, mn)
+		)
+
+		// 1.
+		lmat[0] = 1
+		umat[0] = A.mat[0]
+
+		// 2.
+		for j := 1; j < n; j++ {
+			j0 := j * n
+			lmat[j0] = A.mat[j0] / umat[0]
+			umat[j] = A.mat[j]
+		}
+
+		// 3.
+		for i, imax := 1, n-1; i < imax; i++ {
+			// 4.
+			ii := i * (n + 1) // i*n + i
+			lmat[ii] = 1
+			umat[ii] = A.mat[ii]
+			for k, kmax := 0, i; k < kmax; k++ {
+				umat[ii] -= lmat[i*n+k] * umat[k*n+i]
+			}
+
+			if umat[ii] == 0 {
+				return nil, nil
+			}
+
+			// 5.
+			for j := i + 1; j < n; j++ {
+				ij, ji := i*n+j, j*n+i
+
+				// 5.1. Set Uij
+				lmat[ji] = A.mat[ji]
+				umat[ij] = A.mat[ij]
+				for k, kmat := 0, i; k < kmat; k++ {
+					lmat[ji] -= lmat[j*n+k] * umat[k*n+i]
+					umat[ij] -= lmat[i*n+k] * umat[k*n+j]
+				}
+
+				lmat[ji] /= umat[ii]
+				umat[ij] /= lmat[ii]
+			}
+		}
+
+		// 6.
+		nn := n*n - 1 // (n-1)*n + (n-1)
+		lmat[nn] = 1
+		umat[nn] = A.mat[nn]
+		for k, kmax := 0, n-1; k < kmax; k++ {
+			umat[nn] -= lmat[(n-1)*n+k] * umat[(k+1)*n-1] // (n-1)*n + k = n^2-n+k, k*n + (n-1) = (k+1)*n - 1
+		}
+
+		return &Matrix{mat: lmat, m: n, n: n}, &Matrix{mat: umat, m: n, n: n}
+	case Crout:
+		if A.m == 1 {
+			return &Matrix{mat: []float64{A.mat[0]}, m: 1, n: 1}, &Matrix{mat: []float64{1}, m: 1, n: 1}
+		}
+
+		// TODO
+		fallthrough
+	default:
+		panic(invalidType)
+	}
 }
 
 // Mult ...
@@ -386,37 +492,10 @@ func (A *Matrix) Pow(p int) {
 	}
 }
 
-// ref ...
-func (A *Matrix) ref() {
-	for i := 1; i < A.m; i++ {
-		for j := i; j < A.m; j++ {
-			if A.mat[j*(A.n+1)-1] != 0 {
-				A.ScalDivRow(j, A.mat[j*(A.n+1)-1])
-				A.ScalMultRow(j, A.mat[(j-1)*(A.n+1)])
-				A.SubRows(j, i-1)
-			}
-		}
-	}
-
-	for i := A.m - 2; 0 <= i; i-- {
-		for j := i; 0 <= j; j-- {
-			if A.mat[j*(A.n+1)+1] != 0 {
-				A.ScalDivRow(j, A.mat[j*(A.n+1)+1])
-				A.ScalMultRow(j, A.mat[(j+1)*(A.n+1)])
-				A.SubRows(j, i+1)
-			}
-		}
-	}
-
-	for i := 0; i < A.m; i++ {
-		if A.mat[i*(A.n+1)] != 0 {
-			A.ScalDivRow(i, A.mat[i*(A.n+1)])
-		}
-	}
-}
-
 // ref2 ...
 func (A *Matrix) ref2() {
+	// TODO: Do partial pivoting.
+	// TODO: Return error when no unique solution is detected?
 	if A.n < A.m {
 		panic("invalid dimensions")
 	}
@@ -426,14 +505,14 @@ func (A *Matrix) ref2() {
 	// Numerical Methods, 7th Ed.
 	// Richard L. Burdent and J. Douglas Faires
 	//
-	// Backward substitution is performed in solving Ax = y and A^-1.
+	// Backward substitution is performed in solving Ax = y and A^-1. See Solve
+	// and Inverse.
 	// ------------------------------------------------------------------------
 
 	for i, imax := 0, A.m-1; i < imax; i++ {
-		p := A.m
-		for j := i; j < A.m; j++ {
-			if A.mat[j*A.n+i] != 0 {
-				p = j
+		p := i // Pivot index: index of first row having non-zero entry at Api
+		for ; p < A.m; p++ {
+			if A.mat[p*A.n+i] != 0 {
 				break
 			}
 		}
@@ -444,103 +523,45 @@ func (A *Matrix) ref2() {
 		}
 
 		if i != p {
-			A.Swap(i, p)
-		}
-
-		for j := i + 1; j < A.m; j++ {
-			A.addEqRow(j, 1, i, -A.mat[j*A.n+i]/A.mat[i*(A.n+1)])
-		}
-	}
-
-	if A.mat[A.m*A.m-1] == 0 {
-		// No unique solution
-		return
-	}
-}
-
-// RemoveDupRows ...
-func (A *Matrix) RemoveDupRows() *Matrix {
-	// areRowsMults ...
-	areRowsMults := func(rowi, rowj int) bool {
-		// For Ai to be a multiple of Aj, all column values must either both be
-		// zero, or neither be zero. This finds the first column k such that Aik
-		// and Ajk are both non-zero. Then it sets the ratio r or checks if ratios
-		// are consistent.
-		var r float64 // Ratio of each Aik to Ajk, assuming Aik, Ajk != 0
-		for k := 0; k < A.n; k++ {
-			switch Aik, Ajk := A.mat[rowi*A.n+k], A.mat[rowj*A.n+k]; {
-			case Aik != 0:
-				if Ajk != 0 {
-					if 0 < r {
-						if r != Aik/Ajk {
-							// r not consistent
-							return false
-						}
-					} else {
-						// r should be set only once
-						r = Aik / Ajk
-					}
-				} else {
-					// Aik != 0, but Ajk == 0
-					return false
-				}
-			case Ajk != 0:
-				// Aik == 0, but Ajk != 0
-				return false
+			// Swap rows i and p
+			for j := 0; j < A.n; j++ {
+				ij, pj := i*A.n+j, p*A.n+j
+				A.mat[ij], A.mat[pj] = A.mat[pj], A.mat[ij]
 			}
 		}
 
-		// r is consistant for all non-zero Aik, Ajk
-		return true
-	}
-
-	// TODO
-	var (
-		mat  = append(make([]float64, 0, len(A.mat)), A.mat[:A.n]...)
-		dups = make([]bool, A.m)
-		m    = 1
-	)
-
-	for i, imax := 0, A.m; i < imax; i++ {
-		if dups[i] {
-			continue
-		}
-
 		for j := i + 1; j < A.m; j++ {
-			switch {
-			case dups[j]:
-			case areRowsMults(i, j):
-				dups[j] = true
-			default:
-				mat = append(mat, A.mat[j*A.n:(j+1)*A.n]...)
-				m++
+			// Update Aj as Ajk := Ajk - Aji*Aik/Aii for each column k
+			for k := 0; k < A.n; k++ {
+				A.mat[j*A.n+k] -= A.mat[j*A.n+i] * A.mat[i*A.n+k] / A.mat[i*(A.n+1)]
 			}
 		}
 	}
 
-	return &Matrix{mat: mat, m: m, n: A.n}
+	// if A.mat[A.m*A.m-1] == 0 {
+	// 	// No unique solution
+	// 	return
+	// }
 }
 
 // Row ...
-func (A *Matrix) Row(i int) *Matrix {
+func (A *Matrix) Row(i int) *vtr.Vector {
 	v := make([]float64, 0, A.n)
 	for j, jmax := i*A.n, i*A.n+A.n; j < jmax; j++ {
 		v = append(v, A.mat[j])
 	}
 
-	return &Matrix{mat: v, m: 1, n: A.n}
+	return vtr.New(v...)
 }
 
-// RowMatrix ...
-func RowMatrix(v vtr.Vector) *Matrix {
-	return &Matrix{mat: append(make([]float64, 0, len(v)), v...), m: 1, n: len(v)}
+// Rows ...
+func (A *Matrix) Rows() int {
+	return A.m
 }
 
-// ScalDivRow ...
-func (A *Matrix) ScalDivRow(i int, a float64) {
-	for j, jmax := i*A.n, (i+1)*A.n; j < jmax; j++ {
-		A.mat[j] /= a
-	}
+// RowMatrix returns a matrix having shape 1 by n.
+func RowMatrix(v *vtr.Vector) *Matrix {
+	return &Matrix{mat: v.Values(), m: 1, n: v.Dims()}
 }
 
 // ScalMult ...
@@ -550,23 +571,17 @@ func (A *Matrix) ScalMult(a float64) {
 	}
 }
 
-// ScalMultRow ...
-func (A *Matrix) ScalMultRow(i int, a float64) {
-	for j, jmax := i*A.n, (i+1)*A.n; j < jmax; j++ {
-		A.mat[j] *= a
-	}
-}
-
 // Set ...
 func (A *Matrix) Set(i, j int, v float64) {
 	A.mat[i*A.n+j] = v
 }
 
-// Solve ...
-func (A *Matrix) Solve(y *Vector) *Vector {
-	B := A.Join(y.ColMatrix())
+// Solve Ax = y for x.
+func (A *Matrix) Solve(y *vtr.Vector) *vtr.Vector {
+	B := Join(A, ColMatrix(y))
 	B.ref2()
 
+	// TODO: Beef up vector so that there's not two allocations here.
 	vec := append(make([]float64, B.m-1, B.m), B.mat[B.m*B.n-1]/B.mat[B.m*B.n-2])
 	for i := B.m - 2; 0 <= i; i-- {
 		vec[i] = B.mat[i*B.n+B.m]
@@ -577,12 +592,7 @@ func (A *Matrix) Solve(y *Vector) *Vector {
 		vec[i] /= B.mat[i*(B.n+1)]
 	}
 
-	return &Vector{vec: vec}
-}
-
-// Sort ...
-func (A *Matrix) Sort() {
-	sort.Sort(A)
+	return vtr.New(vec...)
 }
 
 // String ...
@@ -615,35 +625,6 @@ func (A *Matrix) Sub(B *Matrix) {
 	}
 }
 
-// SubRows ...
-func (A *Matrix) SubRows(fromi, subj int) {
-	for k := 0; k < A.n; k++ {
-		A.mat[fromi*A.n+k] -= A.mat[subj*A.n+k]
-	}
-}
-
-// addEqRow updates row i as A[i] := aA[i] + bA[j]. A[j] is unchanged.
-func (A *Matrix) addEqRow(rowi int, a float64, rowj int, b float64) {
-	for k := 0; k < A.n; k++ {
-		A.mat[rowi*A.n+k] *= a
-		A.mat[rowi*A.n+k] += b * A.mat[rowj*A.n+k]
-	}
-}
-
-// Swap ...
-func (A *Matrix) Swap(rowi, rowj int) {
-	for k := 0; k < A.n; k++ {
-		A.mat[rowi*A.n+k], A.mat[rowj*A.n+k] = A.mat[rowj*A.n+k], A.mat[rowi*A.n+k]
-	}
-}
-
-// SwapCols ...
-func (A *Matrix) SwapCols(i, j int) {
-	for k := 0; k < A.m; k++ {
-		A.mat[k*A.n+i], A.mat[k*A.n+j] = A.mat[k*A.n+j], A.mat[k*A.n+i]
-	}
-}
-
 // Trace ...
 func (A *Matrix) Trace(mainDiag bool) float64 {
 	if A.m != A.n {
@@ -667,21 +648,21 @@ func (A *Matrix) Trace(mainDiag bool) float64 {
 
 // Trans ...
 func (A *Matrix) Trans() *Matrix {
-	// TODO
-	mat := make([]float64, 0, A.m*A.n)
+	mat := make([]float64, 0, len(A.mat))
+	for j := 0; j < A.n; j++ {
+		for i := 0; i < A.m; i++ {
+			mat = append(mat, A.mat[i*A.n+j])
+		}
+	}
+
 	return &Matrix{mat: mat, m: A.n, n: A.m}
 }
 
-// Wid ...
-func (A *Matrix) Wid() int {
-	return A.n
-}
-
 // Vector ...
-func (A *Matrix) Vector() *Vector {
+func (A *Matrix) Vector() *vtr.Vector {
 	if A.m != len(A.mat) && A.n != len(A.mat) {
 		panic("invalid dimensions")
 	}
 
-	return &Vector{vec: append(make([]float64, 0, len(A.mat)), A.mat...)}
+	return vtr.New(A.mat...)
 }
