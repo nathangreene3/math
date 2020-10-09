@@ -145,13 +145,13 @@ func (A *Matrix) Approx(B *Matrix, tol float64) bool {
 }
 
 // Col ...
-func (A *Matrix) Col(i int) *Matrix {
-	mat := make([]float64, 0, A.m)
+func (A *Matrix) Col(i int) *vtr.Vector {
+	vec := make([]float64, 0, A.m)
 	for j := i; j < len(A.mat); j += A.n {
-		mat = append(mat, A.mat[j])
+		vec = append(vec, A.mat[j])
 	}
 
-	return &Matrix{mat: mat, m: A.m, n: 1}
+	return vtr.New(vec...)
 }
 
 // Cols ...
@@ -586,12 +586,7 @@ func (A *Matrix) ref() {
 
 // Row ...
 func (A *Matrix) Row(i int) *vtr.Vector {
-	v := make([]float64, 0, A.n)
-	for j, jmax := i*A.n, i*A.n+A.n; j < jmax; j++ {
-		v = append(v, A.mat[j])
-	}
-
-	return vtr.New(v...)
+	return vtr.New(A.mat[i*A.n : i*(A.n+1)]...)
 }
 
 // Rows ...
