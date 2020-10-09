@@ -1,12 +1,7 @@
 package matrix2
 
 import (
-	"fmt"
-	gomath "math"
 	"testing"
-
-	vtr "github.com/nathangreene3/math/linalg/vector2"
-	"github.com/nathangreene3/math/physconst"
 )
 
 func TestMult(t *testing.T) {
@@ -73,36 +68,36 @@ func TestREF(t *testing.T) {
 		// Numerical Analysis, 7th Ed.
 		// Ex 3, p 350
 		//
-		// [1  -1  2  -1 :  -8]
-		// [2  -2  3  -3 : -20]
-		// [1   1  1   0 :  -2]
-		// [1  -1  4   3 :   4]
+		// [1  -1  2  -1 :  -8]     [1 -1  2 -1 : -8]     [1 0 0 0 : -7]
+		// [2  -2  3  -3 : -20] --> [0  2 -1  1 :  6] --> [0 1 0 0 :  3]
+		// [1   1  1   0 :  -2]     [0  0 -1 -1 : -4]     [0 0 1 0 :  2]
+		// [1  -1  4   3 :   4]     [0  0  0  2 :  4]     [0 0 0 1 :  2]
 
 		A := New(4, 5, 1, -1, 2, -1, -8, 2, -2, 3, -3, -20, 1, 1, 1, 0, -2, 1, -1, 4, 3, 4)
 		B := A.Copy()
-		B.ref2()
+		B.ref()
 		t.Errorf("\n%s\n%s\n", A, B)
-		t.Errorf("\n%v\n", New(4, 4, 1, -1, 2, -1, 2, -2, 3, -3, 1, 1, 1, 0, 1, -1, 4, 3).Solve(vtr.New(-8, -20, -2, 4)))
+		// t.Errorf("\n%v\n", New(4, 4, 1, -1, 2, -1, 2, -2, 3, -3, 1, 1, 1, 0, 1, -1, 4, 3).Solve(vtr.New(-8, -20, -2, 4)))
 	}
 
-	{
-		A := New(2, 2, 1, 2, 3, 4)
-		A.Inverse()
-		t.Errorf("\n%v\n", A)
-	}
+	// {
+	// 	A := New(2, 2, 1, 2, 3, 4)
+	// 	A.Inverse()
+	// 	t.Errorf("\n%v\n", A)
+	// }
 
-	{
-		// A pion has kinetic energy of 90.0 MeV and rest energy 140. MeV. It
-		// decays into two photons scattering at two potentially different
-		// angles with respect to the direction of motion of the pion.
-		var (
-			K, E0          float64 = 90, 140
-			theta0, theta1 float64 = 0, -gomath.Pi // Only some values work here: (0,-pi), (theta0,theta0) for some specific theta0.
-			p                      = New(2, 2, gomath.Cos(theta0), gomath.Cos(theta1), 1, 1).Solve(vtr.New(gomath.Sqrt(gomath.Pow(K+E0, 2)-gomath.Pow(E0, 2))/physconst.SpeedOfLight, E0/physconst.SpeedOfLight))
-		)
+	// {
+	// 	// A pion has kinetic energy of 90.0 MeV and rest energy 140. MeV. It
+	// 	// decays into two photons scattering at two potentially different
+	// 	// angles with respect to the direction of motion of the pion.
+	// 	var (
+	// 		K, E0          float64 = 90, 140
+	// 		theta0, theta1 float64 = 0, -gomath.Pi // Only some values work here: (0,-pi), (theta0,theta0) for some specific theta0.
+	// 		p                      = New(2, 2, gomath.Cos(theta0), gomath.Cos(theta1), 1, 1).Solve(vtr.New(gomath.Sqrt(gomath.Pow(K+E0, 2)-gomath.Pow(E0, 2))/physconst.SpeedOfLight, E0/physconst.SpeedOfLight))
+	// 	)
 
-		t.Errorf("\n%v\n", p)
-	}
+	// 	t.Errorf("\n%v\n", p)
+	// }
 }
 
 func TestTrans(t *testing.T) {
@@ -151,6 +146,11 @@ func TestLU(t *testing.T) {
 			LU   = test.L.Mult(test.U)
 		)
 
+		if L == nil || U == nil {
+			t.Errorf("\n   given A = %s\nexpected L = %s\n         U = %s\nreceived L, U = %v, %v\n", test.A, test.L, test.U, L, U)
+			continue
+		}
+
 		if !test.L.Equal(L) {
 			t.Errorf("\n   given A = %s\nexpected L = %s\nreceived L = %s\n", test.A, test.L, L)
 		}
@@ -162,7 +162,31 @@ func TestLU(t *testing.T) {
 		if !test.A.Equal(LU) {
 			t.Errorf("\n    given L = %s and U = %s\nexpected LU = %s\nreceived LU = %s\n", L, U, test.A, LU)
 		}
+	}
+}
 
-		fmt.Printf("\n A = %s\nLU = %s\n", test.A, LU)
+func TestDet(t *testing.T) {
+	tests := []struct {
+		A   *Matrix
+		exp float64
+	}{
+		{
+			A:   New(4, 4, 2, 1, -1, 1, 1, 1, 0, 3, -1, 2, 3, -1, 3, -1, -1, 2),
+			exp: 39,
+		},
+		{
+			A:   New(2, 2, 1, 2, 3, 4),
+			exp: -2,
+		},
+		{
+			A:   New(3, 3, 1, 2, 3, 4, 5, 6, 7, 8, 9),
+			exp: 0,
+		},
+	}
+
+	for _, test := range tests {
+		if rec := test.A.Det(); test.exp != rec {
+			t.Errorf("\n   given A = %s\nexpected |A| = %f\nreceived |A| = %f\n", test.A, test.exp, rec)
+		}
 	}
 }

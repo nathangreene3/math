@@ -122,6 +122,13 @@ func (A *Matrix) Add(B *Matrix) {
 	}
 }
 
+// AddMultRow adds a multiple of a row to another row. That is, Ai := Ai + a*Aj.
+func (A *Matrix) AddMultRow(i, j int, a float64) {
+	for k := 0; k < A.n; k++ {
+		A.mat[i*A.n+k] += a * A.mat[j*A.n+k]
+	}
+}
+
 // Approx ...
 func (A *Matrix) Approx(B *Matrix, tol float64) bool {
 	if A.m != B.m || A.n != B.n {
@@ -199,8 +206,48 @@ func (A *Matrix) Det() float64 {
 	case 3:
 		return A.mat[0]*(A.mat[4]*A.mat[8]-A.mat[5]*A.mat[7]) - A.mat[1]*(A.mat[3]*A.mat[8]-A.mat[5]*A.mat[6]) + A.mat[2]*(A.mat[3]*A.mat[7]-A.mat[4]*A.mat[6])
 	default:
-		// TODO
-		return 0
+		// ------------------------------------------------------------------------
+		// Gaussian elimination (Algorithm 6.1)
+		// Numerical Methods, 7th Ed.
+		// Richard L. Burdent and J. Douglas Faires
+		// ------------------------------------------------------------------------
+		// The determinant is determined by this algorithm, but it requires
+		// additional steps. Changes to the core of this algorithm here should be
+		// applied to ref as well.
+		// ------------------------------------------------------------------------
+		B := A.Copy()
+		d := 1.0 // Determinant
+		for i, imax := 0, B.m-1; i < imax; i++ {
+			p := i
+			for ; p < B.m; p++ {
+				if B.mat[p*B.n+i] != 0 {
+					break
+				}
+			}
+
+			if p == B.m {
+				return gomath.NaN()
+			}
+
+			if i != p {
+				d *= -1
+				B.Swap(i, p)
+			}
+
+			for j := i + 1; j < B.m; j++ {
+				B.AddMultRow(j, i, -B.mat[j*B.n+i]/B.mat[i*(B.n+1)])
+			}
+		}
+
+		if B.mat[B.m*B.m-1] == 0 {
+			return gomath.NaN()
+		}
+
+		for ii, imax, di := 0, B.m*B.m, B.m+1; ii < imax; ii += di {
+			d *= B.mat[ii]
+		}
+
+		return d
 	}
 }
 
@@ -264,7 +311,7 @@ func Inverse(A *Matrix) *Matrix {
 // Inverse ...
 func (A *Matrix) Inverse() {
 	B := Join(A, Identity(A.m))
-	B.ref2()
+	B.ref()
 
 	for k := 0; k < A.n; k++ {
 		for i := B.m - 2; 0 <= i; i-- {
@@ -297,7 +344,7 @@ func Join(As ...*Matrix) *Matrix {
 	return &Matrix{mat: mat, m: As[0].m, n: n}
 }
 
-// LU ...
+// LU factors a square matrix into two triangular matrices. Doolittle factoring sets Lii = 1 for each i in [0,n). Crout factoring sets Uii = 1. Currently, these are the only types of factoring supported.
 func (A *Matrix) LU(t LUType) (*Matrix, *Matrix) {
 	if A.m != A.n {
 		panic(matrixShape)
@@ -315,9 +362,8 @@ func (A *Matrix) LU(t LUType) (*Matrix, *Matrix) {
 
 		var (
 			n    = A.m
-			mn   = n * n
-			lmat = make([]float64, mn)
-			umat = make([]float64, mn)
+			lmat = make([]float64, n*n)
+			umat = make([]float64, n*n)
 		)
 
 		// 1.
@@ -348,8 +394,6 @@ func (A *Matrix) LU(t LUType) (*Matrix, *Matrix) {
 			// 5.
 			for j := i + 1; j < n; j++ {
 				ij, ji := i*n+j, j*n+i
-
-				// 5.1. Set Uij
 				lmat[ji] = A.mat[ji]
 				umat[ij] = A.mat[ij]
 				for k, kmat := 0, i; k < kmat; k++ {
@@ -492,8 +536,8 @@ func (A *Matrix) Pow(p int) {
 	}
 }
 
-// ref2 ...
-func (A *Matrix) ref2() {
+// ref ...
+func (A *Matrix) ref() {
 	// TODO: Do partial pivoting.
 	// TODO: Return error when no unique solution is detected?
 	if A.n < A.m {
@@ -504,13 +548,16 @@ func (A *Matrix) ref2() {
 	// Gaussian elimination (Algorithm 6.1)
 	// Numerical Methods, 7th Ed.
 	// Richard L. Burdent and J. Douglas Faires
-	//
+	// ------------------------------------------------------------------------
 	// Backward substitution is performed in solving Ax = y and A^-1. See Solve
 	// and Inverse.
 	// ------------------------------------------------------------------------
-
+	// The determinant is determined by this algorithm, but it requires
+	// additional steps. Changes to the core of this algorithm here should be
+	// applied to the determinant as well.
+	// ------------------------------------------------------------------------
 	for i, imax := 0, A.m-1; i < imax; i++ {
-		p := i // Pivot index: index of first row having non-zero entry at Api
+		p := i // Pivot index
 		for ; p < A.m; p++ {
 			if A.mat[p*A.n+i] != 0 {
 				break
@@ -523,18 +570,11 @@ func (A *Matrix) ref2() {
 		}
 
 		if i != p {
-			// Swap rows i and p
-			for j := 0; j < A.n; j++ {
-				ij, pj := i*A.n+j, p*A.n+j
-				A.mat[ij], A.mat[pj] = A.mat[pj], A.mat[ij]
-			}
+			A.Swap(i, p)
 		}
 
 		for j := i + 1; j < A.m; j++ {
-			// Update Aj as Ajk := Ajk - Aji*Aik/Aii for each column k
-			for k := 0; k < A.n; k++ {
-				A.mat[j*A.n+k] -= A.mat[j*A.n+i] * A.mat[i*A.n+k] / A.mat[i*(A.n+1)]
-			}
+			A.AddMultRow(j, i, -A.mat[j*A.n+i]/A.mat[i*(A.n+1)])
 		}
 	}
 
@@ -579,7 +619,7 @@ func (A *Matrix) Set(i, j int, v float64) {
 // Solve Ax = y for x.
 func (A *Matrix) Solve(y *vtr.Vector) *vtr.Vector {
 	B := Join(A, ColMatrix(y))
-	B.ref2()
+	B.ref()
 
 	// TODO: Beef up vector so that there's not two allocations here.
 	vec := append(make([]float64, B.m-1, B.m), B.mat[B.m*B.n-1]/B.mat[B.m*B.n-2])
@@ -622,6 +662,14 @@ func (A *Matrix) Sub(B *Matrix) {
 
 	for i, imax := 0, A.m*A.n; i < imax; i++ {
 		A.mat[i] -= B.mat[i]
+	}
+}
+
+// Swap two rows.
+func (A *Matrix) Swap(i, j int) {
+	for k := 0; k < A.n; k++ {
+		ik, jk := i*A.n+k, j*A.n+k
+		A.mat[ik], A.mat[jk] = A.mat[jk], A.mat[ik]
 	}
 }
 
