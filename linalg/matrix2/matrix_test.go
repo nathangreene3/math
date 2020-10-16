@@ -75,8 +75,10 @@ func TestREF(t *testing.T) {
 
 		A := New(4, 5, 1, -1, 2, -1, -8, 2, -2, 3, -3, -20, 1, 1, 1, 0, -2, 1, -1, 4, 3, 4)
 		B := A.Copy()
-		B.ref()
-		t.Errorf("\n%s\n%s\n", A, B)
+		B.Reduce()
+		C := A.Copy().Trans()
+		C.Reduce()
+		t.Errorf("\n%s\n%s\n%s\n", A, B, C)
 		// t.Errorf("\n%v\n", New(4, 4, 1, -1, 2, -1, 2, -2, 3, -3, 1, 1, 1, 0, 1, -1, 4, 3).Solve(vtr.New(-8, -20, -2, 4)))
 	}
 

@@ -31,13 +31,13 @@ const (
 // Matrix constructors
 // ----------------------------------------------------------
 
-// Cols ...
+// Cols joins several vectors together as columns into a matrix.
 func Cols(vs ...*vtr.Vector) *Matrix {
 	// TODO: Improve this to not allocate twice.
 	return Rows(vs...).Trans()
 }
 
-// Identity ...
+// Identity returns In.
 func Identity(n int) *Matrix {
 	if n < 0 {
 		panic("")
@@ -51,7 +51,7 @@ func Identity(n int) *Matrix {
 	return &Matrix{mat: mat, m: n, n: n}
 }
 
-// Gen ...
+// Gen returns a matrix defined by a generator.
 func Gen(m, n int, f Generator) *Matrix {
 	if m < 0 || n < 0 {
 		panic("")
@@ -67,7 +67,7 @@ func Gen(m, n int, f Generator) *Matrix {
 	return &Matrix{mat: mat, m: m, n: n}
 }
 
-// New ...
+// New returns a matrix defined by a list of values.
 func New(m, n int, mat ...float64) *Matrix {
 	if m*n != len(mat) {
 		panic("")
@@ -76,7 +76,7 @@ func New(m, n int, mat ...float64) *Matrix {
 	return &Matrix{mat: append(make([]float64, 0, len(mat)), mat...), m: m, n: n}
 }
 
-// Rows ...
+// Rows joins several vectors together as rows into a matrix.
 func Rows(vs ...*vtr.Vector) *Matrix {
 	n := vs[0].Dims()
 	mat := append(make([]float64, 0, n*len(vs)), vs[0].Values()...)
@@ -91,7 +91,7 @@ func Rows(vs ...*vtr.Vector) *Matrix {
 	return &Matrix{mat: mat, m: len(vs), n: n}
 }
 
-// Zeroes ...
+// Zeroes returns a zero-valued matrix.
 func Zeroes(m, n int) *Matrix {
 	if m < 0 || n < 0 {
 		panic("")
@@ -230,12 +230,12 @@ func (A *Matrix) Det() float64 {
 			}
 
 			if i != p {
-				d *= -1
 				B.Swap(i, p)
+				d *= -1
 			}
 
-			for j := i + 1; j < B.m; j++ {
-				B.AddMultRow(j, i, -B.mat[j*B.n+i]/B.mat[i*(B.n+1)])
+			for Bii, j := -B.mat[i*(A.n+1)], i+1; j < B.m; j++ {
+				B.AddMultRow(j, i, B.mat[j*B.n+i]/Bii)
 			}
 		}
 
@@ -301,23 +301,23 @@ func (A *Matrix) Identity() {
 	}
 }
 
-// Inverse ...
+// Inverse returns the inverse of a matrix.
 func Inverse(A *Matrix) *Matrix {
 	B := A.Copy()
 	B.Inverse()
 	return B
 }
 
-// Inverse ...
+// Inverse inverts a matrix.
 func (A *Matrix) Inverse() {
 	B := Join(A, Identity(A.m))
-	B.ref()
-
+	B.Reduce()
 	for k := 0; k < A.n; k++ {
 		for i := B.m - 2; 0 <= i; i-- {
-			A.mat[i*A.n+k] = B.mat[i*B.n+B.m]
+			ik := i*A.n + k
+			A.mat[ik] = B.mat[i*B.n+B.m]
 			for j := i + 1; j < B.m; j++ {
-				A.mat[i*A.n+k] -= B.mat[i*B.n+j] * A.mat[j*A.n+k]
+				A.mat[ik] -= B.mat[i*B.n+j] * A.mat[j*A.n+k]
 			}
 		}
 	}
@@ -427,7 +427,7 @@ func (A *Matrix) LU(t LUType) (*Matrix, *Matrix) {
 	}
 }
 
-// Mult ...
+// Mult returns A0*A1*A2*...
 func Mult(As ...*Matrix) *Matrix {
 	switch n := len(As); n {
 	case 0:
@@ -480,7 +480,7 @@ func Mult(As ...*Matrix) *Matrix {
 	}
 }
 
-// Mult ...
+// Mult returns A*B.
 func (A *Matrix) Mult(B *Matrix) *Matrix {
 	if A.n != B.m {
 		panic("")
@@ -499,14 +499,14 @@ func (A *Matrix) Mult(B *Matrix) *Matrix {
 	return &Matrix{mat: mat, m: A.m, n: B.n}
 }
 
-// Pow ...
+// Pow returns A^p.
 func Pow(A *Matrix, p int) *Matrix {
 	B := A.Copy()
 	B.Pow(p)
 	return B
 }
 
-// Pow ...
+// Pow computes A := A^p.
 func (A *Matrix) Pow(p int) {
 	switch {
 	case A.m != A.n:
@@ -536,14 +536,8 @@ func (A *Matrix) Pow(p int) {
 	}
 }
 
-// ref ...
-func (A *Matrix) ref() {
-	// TODO: Do partial pivoting.
-	// TODO: Return error when no unique solution is detected?
-	if A.n < A.m {
-		panic("invalid dimensions")
-	}
-
+// Reduce a matrix to an upper triangular matrix.
+func (A *Matrix) Reduce() {
 	// ------------------------------------------------------------------------
 	// Gaussian elimination (Algorithm 6.1)
 	// Numerical Methods, 7th Ed.
@@ -556,6 +550,8 @@ func (A *Matrix) ref() {
 	// additional steps. Changes to the core of this algorithm here should be
 	// applied to the determinant as well.
 	// ------------------------------------------------------------------------
+
+	// TODO: Do partial pivoting.
 	for i, imax := 0, A.m-1; i < imax; i++ {
 		p := i // Pivot index
 		for ; p < A.m; p++ {
@@ -573,8 +569,8 @@ func (A *Matrix) ref() {
 			A.Swap(i, p)
 		}
 
-		for j := i + 1; j < A.m; j++ {
-			A.AddMultRow(j, i, -A.mat[j*A.n+i]/A.mat[i*(A.n+1)])
+		for Aii, j := A.mat[i*(A.n+1)], i+1; j < A.m; j++ {
+			A.AddMultRow(j, i, -A.mat[j*A.n+i]/Aii)
 		}
 	}
 
@@ -584,12 +580,12 @@ func (A *Matrix) ref() {
 	// }
 }
 
-// Row ...
+// Row returns Ai.
 func (A *Matrix) Row(i int) *vtr.Vector {
 	return vtr.New(A.mat[i*A.n : i*(A.n+1)]...)
 }
 
-// Rows ...
+// Rows returns the number of rows in A.
 func (A *Matrix) Rows() int {
 	return A.m
 }
@@ -614,7 +610,7 @@ func (A *Matrix) Set(i, j int, v float64) {
 // Solve Ax = y for x.
 func (A *Matrix) Solve(y *vtr.Vector) *vtr.Vector {
 	B := Join(A, ColMatrix(y))
-	B.ref()
+	B.Reduce()
 
 	// TODO: Beef up vector so that there's not two allocations here.
 	vec := append(make([]float64, B.m-1, B.m), B.mat[B.m*B.n-1]/B.mat[B.m*B.n-2])
