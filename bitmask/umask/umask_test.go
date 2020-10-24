@@ -10,7 +10,7 @@ import (
 func TestBitmask(t *testing.T) {
 	{
 		// Sieve of Eratosthenes
-		primes := Max.ClrBits(0, 1)
+		primes := UMax.ClrBits(0, 1)
 		for m := uint(2); m < Bits; m++ {
 			if primes.MasksBit(m) {
 				for n := m << 1; n < Bits; n += m {
@@ -24,7 +24,7 @@ func TestBitmask(t *testing.T) {
 			for ; d < n && n%d != 0; d++ {
 			}
 
-			return d == n
+			return n == d
 		}
 
 		for i := uint(0); i < Bits; i++ {
@@ -68,7 +68,7 @@ func TestBitmask(t *testing.T) {
 		expBin, expOct, expDec, expHex string
 	}{
 		{
-			a:      Zero,
+			a:      New(),
 			expBin: "0",
 			expOct: "0",
 			expDec: "0",

@@ -1,6 +1,7 @@
 package umask
 
 import (
+	"math/bits"
 	"strconv"
 
 	bm "github.com/nathangreene3/math/bitmask"
@@ -10,22 +11,48 @@ import (
 type UMask uint
 
 const (
-	// Zero is the value of 0.
-	Zero UMask = 0
-
-	// One is the value of 1.
-	One UMask = 1
-
-	// Max is the largest umask.
-	Max UMask = ^Zero
-
 	// Bits is the number of bits in a umask.
 	Bits uint = strconv.IntSize
+
+	// U0 is the value of 0.
+	U0 UMask = 0
+
+	// UMax is the largest valued bitmask.
+	UMax UMask = ^U0
 )
 
-// New ...
+const (
+	// U1 is the value of 1.
+	U1 UMask = 1 << iota
+
+	// U2 is the value of 2.
+	U2
+
+	// U4 is the value of 4.
+	U4
+
+	// U8 is the value of 8.
+	U8
+
+	// U16 is the value of 16.
+	U16
+
+	// U32 is the value of 32.
+	U32
+
+	// U64 is the value of 64.
+	U64
+
+	// U128 is the value of 128.
+	U128
+
+	// U256 is the value of 256.
+	U256
+)
+
+// New returns a new bitmask with a value of zero.
 func New() bm.Bitmask {
-	return Zero
+	return U0
 }
 
 // And returns a bitmask with only the bits set that are common to both bitmasks.
@@ -61,6 +88,11 @@ func (a UMask) ClrBits(b ...uint) bm.Bitmask {
 	return a
 }
 
+// Count ...
+func (a UMask) Count() uint {
+	return uint(bits.OnesCount(uint(a)))
+}
+
 // Dec returns a string representing a bitmask in decimal.
 func (a UMask) Dec() string {
 	return strconv.FormatUint(uint64(a), 10)
@@ -85,6 +117,11 @@ func (a UMask) Masks(b bm.Bitmask) bool {
 func (a UMask) MasksBit(b uint) bool {
 	var c UMask = 1 << b
 	return a&c == c
+}
+
+// Bits ...
+func (a UMask) Bits() uint {
+	return uint(bits.Len(uint(a)))
 }
 
 // Not inverts a bitmask. This is equivalent to calling Max.Xor(a).

@@ -1,6 +1,6 @@
 package bitmask
 
-// Bitmask ...
+// Bitmask is defined by bitwise logic, masking, shifting, and string operations.
 type Bitmask interface {
 	// Logical operations
 	And(Bitmask) Bitmask
@@ -9,8 +9,10 @@ type Bitmask interface {
 	Xor(Bitmask) Bitmask
 
 	// Mask operations
+	Bits() uint
 	Clr(...Bitmask) Bitmask
 	ClrBits(...uint) Bitmask
+	Count() uint
 	Masks(Bitmask) bool
 	MasksBit(uint) bool
 	Set(...Bitmask) Bitmask
@@ -21,6 +23,7 @@ type Bitmask interface {
 	Rsh(uint) Bitmask
 
 	// String operations
+	Base(uint) string
 	Bin() string
 	Dec() string
 	Hex() string
