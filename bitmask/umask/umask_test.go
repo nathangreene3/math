@@ -11,7 +11,7 @@ func TestBitmask(t *testing.T) {
 	{
 		// Sieve of Eratosthenes
 		primes := UMax.ClrBits(0, 1)
-		for m := uint(2); m < Bits; m++ {
+		for m := 2; m < Bits; m++ {
 			if primes.MasksBit(m) {
 				for n := m << 1; n < Bits; n += m {
 					primes = primes.ClrBits(n)
@@ -19,15 +19,15 @@ func TestBitmask(t *testing.T) {
 			}
 		}
 
-		isPrime := func(n uint) bool {
-			var d uint = 2
+		isPrime := func(n int) bool {
+			var d int = 2
 			for ; d < n && n%d != 0; d++ {
 			}
 
 			return n == d
 		}
 
-		for i := uint(0); i < Bits; i++ {
+		for i := 0; i < Bits; i++ {
 			if primes.MasksBit(i) {
 				if !isPrime(i) {
 					t.Errorf("\nexpected %d to be prime\n", i)
@@ -41,18 +41,18 @@ func TestBitmask(t *testing.T) {
 	{
 		// Squares
 		squares := New()
-		for i := uint(0); i < Bits; i++ {
+		for i := 0; i < Bits; i++ {
 			if i2 := i * i; i2 < Bits {
 				squares = squares.SetBits(i2)
 			}
 		}
 
-		isSquare := func(n uint) bool {
-			r := uint(math.Sqrt(float64(n)))
+		isSquare := func(n int) bool {
+			r := int(math.Sqrt(float64(n)))
 			return n == r*r
 		}
 
-		for n := uint(0); n < Bits; n++ {
+		for n := 0; n < Bits; n++ {
 			if squares.MasksBit(n) {
 				if !isSquare(n) {
 					t.Errorf("\nexpected %d to be square\n", n)

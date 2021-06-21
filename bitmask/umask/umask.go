@@ -12,7 +12,7 @@ type UMask uint
 
 const (
 	// Bits is the number of bits in a umask.
-	Bits uint = strconv.IntSize
+	Bits = strconv.IntSize // TODO: Remove dependency
 
 	// U0 is the value of 0.
 	U0 UMask = 0
@@ -55,14 +55,22 @@ func New() bm.Bitmask {
 	return U0
 }
 
+func One() bm.Bitmask {
+	return U1
+}
+
+func Zero() bm.Bitmask {
+	return U0
+}
+
 // And returns a bitmask with only the bits set that are common to both bitmasks.
 func (a UMask) And(b bm.Bitmask) bm.Bitmask {
 	return a & b.(UMask)
 }
 
 // Base returns a string representing a bitmask in a given base n where 2 <= n <= 36.
-func (a UMask) Base(n uint) string {
-	return strconv.FormatUint(uint64(a), int(n))
+func (a UMask) Base(n int) string {
+	return strconv.FormatUint(uint64(a), n)
 }
 
 // Bin returns a string representing a bitmask in binary.
@@ -80,7 +88,7 @@ func (a UMask) Clr(b ...bm.Bitmask) bm.Bitmask {
 }
 
 // ClrBits returns a bitmask with the given bits cleared from a.
-func (a UMask) ClrBits(b ...uint) bm.Bitmask {
+func (a UMask) ClrBits(b ...int) bm.Bitmask {
 	for i := 0; i < len(b); i++ {
 		a &^= 1 << b[i]
 	}
@@ -89,8 +97,8 @@ func (a UMask) ClrBits(b ...uint) bm.Bitmask {
 }
 
 // Count ...
-func (a UMask) Count() uint {
-	return uint(bits.OnesCount(uint(a)))
+func (a UMask) Count() int {
+	return bits.OnesCount(uint(a))
 }
 
 // Dec returns a string representing a bitmask in decimal.
@@ -104,7 +112,7 @@ func (a UMask) Hex() string {
 }
 
 // Lsh returns a Bitmask shifted to the left n times.
-func (a UMask) Lsh(n uint) bm.Bitmask {
+func (a UMask) Lsh(n int) bm.Bitmask {
 	return a << n
 }
 
@@ -114,14 +122,14 @@ func (a UMask) Masks(b bm.Bitmask) bool {
 }
 
 // MasksBit determines if a bit is set.
-func (a UMask) MasksBit(b uint) bool {
-	var c UMask = 1 << b
+func (a UMask) MasksBit(b int) bool {
+	c := U1 << b
 	return a&c == c
 }
 
 // Bits ...
-func (a UMask) Bits() uint {
-	return uint(bits.Len(uint(a)))
+func (a UMask) Bits() int {
+	return bits.Len(uint(a))
 }
 
 // Not inverts a bitmask. This is equivalent to calling Max.Xor(a).
@@ -140,7 +148,7 @@ func (a UMask) Or(b bm.Bitmask) bm.Bitmask {
 }
 
 // Rsh returns a Bitmask shifted to the right n times.
-func (a UMask) Rsh(n uint) bm.Bitmask {
+func (a UMask) Rsh(n int) bm.Bitmask {
 	return a >> n
 }
 
@@ -154,7 +162,7 @@ func (a UMask) Set(b ...bm.Bitmask) bm.Bitmask {
 }
 
 // SetBits ...
-func (a UMask) SetBits(b ...uint) bm.Bitmask {
+func (a UMask) SetBits(b ...int) bm.Bitmask {
 	for i := 0; i < len(b); i++ {
 		a |= 1 << b[i]
 	}

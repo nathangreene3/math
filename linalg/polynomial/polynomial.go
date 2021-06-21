@@ -184,7 +184,7 @@ func (f *Polynomial) pow(n int) Polynomial {
 	//     [ an-1 an-1 ... an-1 ]
 	var (
 		dims = len(*f)
-		F    = matrix.Pow(matrix.New(dims, dims, func(i, j int) float64 { return (*f)[i] }), dims-1)
+		F    = matrix.Pow(matrix.Gen(dims, dims, func(i, j int) float64 { return (*f)[i] }), dims-1)
 	)
 
 	for i, v := range *f {

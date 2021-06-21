@@ -13,6 +13,7 @@ func main() {
 		vtr.New(3, 4),
 	)
 
-	fmt.Println(mtx.Pow(mtx.Pow(A,7),-1))
-	fmt.Println(A.Pow(-7))
+	fmt.Println(mtx.Pow(mtx.Pow(A, 7), -1))
+	A.Pow(-7)
+	fmt.Println(A)
 }

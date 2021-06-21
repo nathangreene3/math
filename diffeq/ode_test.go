@@ -166,12 +166,12 @@ func subtestEulersNumber(t *testing.T) bool {
 		"Approximating Euler's Number",
 		func(s *testing.T) {
 			var (
-				v0 = vtr.List(1) // x0 = e^0 = 1
+				v0 = vtr.New(1) // x0 = e^0 = 1
 				t0 = float64(0)
 				t1 = float64(1)
 				dt = float64(0.01)
 				f  = SysODE{func(t float64, v vtr.Vector) float64 { return v[0] }}
-				R  = mtx.List(
+				R  = mtx.New(
 					Euler(f, v0, t0, t1, dt),
 					Euler2(f, v0, t0, t1, dt),
 					Heun(f, v0, t0, t1, dt),
@@ -215,7 +215,7 @@ func subtestSecondOrderLinear(t *testing.T) bool {
 		"Approximating x'' + 3x' +2x = 0",
 		func(s *testing.T) {
 			var (
-				v0 = vtr.List(1, 1)
+				v0 = vtr.New(1, 1)
 				t0 = float64(0)
 				t1 = float64(1)
 				dt = float64(0.125)
@@ -223,7 +223,7 @@ func subtestSecondOrderLinear(t *testing.T) bool {
 					func(t float64, v vtr.Vector) float64 { return v[1] },
 					func(t float64, v vtr.Vector) float64 { return -2*v[0] - 3*v[1] },
 				}
-				R = mtx.List(
+				R = mtx.New(
 					Euler(f, v0, t0, t1, dt),
 					Euler2(f, v0, t0, t1, dt),
 					Heun(f, v0, t0, t1, dt),
@@ -262,7 +262,7 @@ func subtestGravity(t *testing.T) bool {
 	f := func(t0 *testing.T) {
 		var (
 			mu  float64 = 1
-			p0          = vtr.List(1, 0, 0, 1) // r, theta, r', theta'
+			p0          = vtr.New(1, 0, 0, 1) // r, theta, r', theta'
 			sys SysODE  = SysODE{
 				func(t float64, p vtr.Vector) float64 { return p[2] },                       // r'
 				func(t float64, p vtr.Vector) float64 { return p[3] },                       // theta'
@@ -285,13 +285,13 @@ func subtestRosettaCode(t *testing.T) bool {
 		"Rosetta Code Example",
 		func(s *testing.T) {
 			var (
-				v0 = vtr.List(1) // x0 = 1
+				v0 = vtr.New(1) // x0 = 1
 				t0 = float64(0)
 				t1 = float64(10)
 				dt = float64(0.0001)
 				f  = SysODE{func(t float64, v vtr.Vector) float64 { return t * math.Sqrt(v[0]) }}
 				x  = func(t float64) float64 { y := t*t + 4; return y * y / 16 }(t1)
-				R  = mtx.List(
+				R  = mtx.New(
 					Euler(f, v0, t0, t1, dt),
 					Euler2(f, v0, t0, t1, dt),
 					Heun(f, v0, t0, t1, dt),
@@ -333,7 +333,7 @@ func subtestPredatorPrey(t *testing.T) bool {
 		"Predator vs Prey Model",
 		func(s *testing.T) {
 			var (
-				v0 = vtr.List(1, 3)
+				v0 = vtr.New(1, 3)
 				t0 = float64(0)
 				t1 = float64(1)
 				dt = float64(0.01)
@@ -342,7 +342,7 @@ func subtestPredatorPrey(t *testing.T) bool {
 					func(t float64, v vtr.Vector) float64 { return -v[1] + v[0]*v[1] },
 				}
 
-				R = mtx.List(
+				R = mtx.New(
 					Euler(f, v0, t0, t1, dt),
 					Euler2(f, v0, t0, t1, dt),
 					Heun(f, v0, t0, t1, dt),
@@ -433,7 +433,7 @@ func TestHistory(t *testing.T) {
 		//       = -2.4x + 1.6y + 3.6
 
 		var (
-			v0 = vtr.List(0, 0) // (x0, y0)
+			v0 = vtr.New(0, 0) // (x0, y0)
 			t0 = float64(0)
 			t1 = float64(0.1)
 			dt = float64(0.1)
@@ -474,7 +474,7 @@ func BenchmarkEuler(b *testing.B) {
 		t0 = float64(0)
 		t1 = float64(1)
 		dt = float64(0.01)
-		v0 = vtr.List(1)
+		v0 = vtr.New(1)
 		f  = SysODE{func(t float64, v vtr.Vector) float64 { return v[0] }}
 	)
 

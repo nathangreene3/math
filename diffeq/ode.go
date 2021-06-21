@@ -68,7 +68,7 @@ func EulerHistory(f SysODE, v0 vtr.Vector, t0, t1, dt float64) []vtr.Vector {
 
 	vh := append(make([]vtr.Vector, 0, int((t1-t0)/dt)), v0.Copy())
 	for ; t0 < t1; t0 += dt {
-		vh = append(vh, vtr.Add(vh[len(vh)-1], vtr.New(n, func(i int) float64 { return f[i](t0, vh[len(vh)-1]) * dt })))
+		vh = append(vh, vtr.Add(vh[len(vh)-1], vtr.Gen(n, func(i int) float64 { return f[i](t0, vh[len(vh)-1]) * dt })))
 	}
 
 	return vh
@@ -153,7 +153,7 @@ func Euler2History(f SysODE, v0 vtr.Vector, t0, t1, dt float64) []vtr.Vector {
 			w[i] = v1[len(v1)-1][i] + k[i]*dt
 		}
 
-		v1 = append(v1, vtr.New(n, func(i int) float64 { return v1[len(v1)-1][i] + (k[i]+f[i](t0+dt, w))*dt/2 }))
+		v1 = append(v1, vtr.Gen(n, func(i int) float64 { return v1[len(v1)-1][i] + (k[i]+f[i](t0+dt, w))*dt/2 }))
 	}
 
 	return v1
@@ -205,7 +205,7 @@ func HeunHistory(f SysODE, v0 vtr.Vector, t0, t1, dt float64) []vtr.Vector {
 			w[i] = v1[len(v1)-1][i] + 2*k[i]*dt/3
 		}
 
-		v1 = append(v1, vtr.New(n, func(i int) float64 { return v1[len(v1)-1][i] + (k[i]+3*f[i](t0+2*dt/3, w))*dt/4 }))
+		v1 = append(v1, vtr.Gen(n, func(i int) float64 { return v1[len(v1)-1][i] + (k[i]+3*f[i](t0+2*dt/3, w))*dt/4 }))
 	}
 
 	return v1
@@ -293,7 +293,7 @@ func RungeKuttaHistory(f SysODE, v0 vtr.Vector, t0, t1, dt float64) []vtr.Vector
 			K[3][i] = f[i](t0+dt, w) * dt
 		}
 
-		v1 = append(v1, vtr.New(n, func(i int) float64 { return v1[len(v1)-1][i] + (K[0][i]+2*(K[1][i]+K[2][i])+K[3][i])/6 }))
+		v1 = append(v1, vtr.Gen(n, func(i int) float64 { return v1[len(v1)-1][i] + (K[0][i]+2*(K[1][i]+K[2][i])+K[3][i])/6 }))
 	}
 
 	return v1

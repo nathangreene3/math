@@ -1,27 +1,15 @@
 package lmask
 
-// import (
-// 	"math/big"
+import "strconv"
 
-// 	bm "github.com/nathangreene3/math/bitmask"
-// )
+// LMask ...
+type LMask []uint
 
-// // LMask ...
-// type LMask big.Int
+const (
+	Bits = strconv.IntSize // TODO: Remove dependency
+)
 
-// // New ...
-// func New() bm.Bitmask {
-// 	a := LMask(*big.NewInt(0))
-// 	return &a
-// }
-
-// // And ...
-// func (a *LMask) And(b bm.Bitmask) bm.Bitmask {
-// 	a.(big.Int).And(b.(*LMask))
-// 	return a
-// }
-
-// func (a *LMask) Not() bm.Bitmask {
-
-// 	return a
-// }
+var (
+	U0 LMask = LMask{}
+	U1 LMask = LMask{1}
+)

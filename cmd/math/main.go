@@ -12,7 +12,7 @@ import (
 	"math/rand"
 	"os"
 
-	ode "github.com/nathangreene3/math/diffeq/multivar"
+	ode "github.com/nathangreene3/math/diffeq"
 	vtr "github.com/nathangreene3/math/linalg/vector"
 )
 
@@ -21,7 +21,7 @@ func main() {
 		G  = float64(1)
 		m0 = float64(1)
 		m1 = float64(1)
-		v0 = vtr.List(1.25, 0, 0, 0.5)
+		v0 = vtr.New(1.25, 0, 0, 0.5)
 		t0 = float64(0)
 		t1 = float64(1)
 		dt = float64(0.001)

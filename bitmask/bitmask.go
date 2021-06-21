@@ -9,21 +9,21 @@ type Bitmask interface {
 	Xor(Bitmask) Bitmask
 
 	// Mask operations
-	Bits() uint
+	Bits() int
 	Clr(...Bitmask) Bitmask
-	ClrBits(...uint) Bitmask
-	Count() uint
+	ClrBits(...int) Bitmask
+	Count() int
 	Masks(Bitmask) bool
-	MasksBit(uint) bool
+	MasksBit(int) bool
 	Set(...Bitmask) Bitmask
-	SetBits(...uint) Bitmask
+	SetBits(...int) Bitmask
 
 	// Shift operations
-	Lsh(uint) Bitmask
-	Rsh(uint) Bitmask
+	Lsh(int) Bitmask
+	Rsh(int) Bitmask
 
 	// String operations
-	Base(uint) string
+	Base(int) string
 	Bin() string
 	Dec() string
 	Hex() string
